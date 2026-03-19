@@ -5,12 +5,13 @@ import { calculateRoute, optimizeRoute, formatDistance, formatDuration } from '.
 import './StopPanel.css';
 
 const SURVEY_TYPES = [
-  'Property',
-  'Casualty',
-  'Auto',
-  'Workers Comp',
-  'General Liability',
-  'Other'
+  'Exterior',
+  'Interior/Exterior',
+  'High Value',
+  'Elite High Value',
+  'Lender Appt',
+  'LPC',
+  'Commercial'
 ];
 
 export default function StopPanel() {
@@ -45,7 +46,7 @@ export default function StopPanel() {
   const [addressInput, setAddressInput] = useState('');
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [caseNumber, setCaseNumber] = useState('');
-  const [surveyType, setSurveyType] = useState('Property');
+  const [surveyType, setSurveyType] = useState('Exterior');
   const [stopNumber, setStopNumber] = useState('');
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [editingStopId, setEditingStopId] = useState(null);
@@ -121,7 +122,7 @@ export default function StopPanel() {
         state: geocodedLocation.state,
         zip: geocodedLocation.zip,
         caseNumber: caseNumber || '',
-        surveyType: surveyType || 'Property',
+        surveyType: surveyType || 'Exterior',
         stopNumber: stopNumber || String(stops.length + 1),
         dayDate: activeDay
       };
@@ -132,7 +133,7 @@ export default function StopPanel() {
       setAddressInput('');
       setSelectedAddress(null);
       setCaseNumber('');
-      setSurveyType('Property');
+      setSurveyType('Exterior');
       setStopNumber('');
       setAddressSuggestions([]);
     } catch (error) {
@@ -384,7 +385,7 @@ export default function StopPanel() {
                       <label>Survey Type</label>
                       <select
                         className="select-input"
-                        value={stop.surveyType || 'Property'}
+                        value={stop.surveyType || 'Exterior'}
                         onChange={(e) => handleUpdateStop(stop.id, 'surveyType', e.target.value)}
                       >
                         {SURVEY_TYPES.map(type => (
