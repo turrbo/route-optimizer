@@ -1,0 +1,200 @@
+================================================================================
+MUELLER REPORTS ROUTE OPTIMIZER - CHROME EXTENSION
+================================================================================
+
+📁 PROJECT STRUCTURE
+--------------------
+chrome-extension/
+├── manifest.json          ✓ Manifest V3 configuration
+├── background.js          ✓ Service worker (context menu, storage, badge)
+├── content.js             ✓ Address detection & highlighting
+├── content.css            ✓ Highlight styles
+├── popup.html             ✓ Extension popup UI (Mueller branding)
+├── popup.js               ✓ Popup functionality
+├── icon16.png             ✓ 16x16 toolbar icon
+├── icon48.png             ✓ 48x48 icon
+├── icon128.png            ✓ 128x128 icon
+├── README.md              ✓ Complete documentation
+├── INSTALL.md             ✓ Quick installation guide
+└── SUMMARY.txt            ✓ This file
+
+🎨 BRANDING
+-----------
+Colors:
+  • Primary Red:    #c8102e (Mueller Reports red)
+  • Dark Gray:      #292929 (text & buttons)
+  • White:          #ffffff (backgrounds & text)
+  
+Font:
+  • Raleway (with system fallbacks)
+  
+Design:
+  • Clean, professional interface
+  • 380px popup width
+  • Smooth transitions and hover states
+  • Badge counter with red background
+
+✨ KEY FEATURES
+---------------
+1. Context Menu Integration
+   → Right-click selected text
+   → "Add to Route Optimizer" appears
+   → Address saved to pending stops
+
+2. Manual Address Entry
+   → Text input field in popup
+   → Press Enter or click Add button
+   → Addresses stored locally
+
+3. Automatic Page Scanning
+   → Click "Scan Page for Addresses"
+   → Detects US address patterns
+   → Adds multiple addresses at once
+
+4. Address Highlighting
+   → Visual indicators on detected addresses
+   → Hover effects with location pin emoji
+   → Click highlighted address to add
+
+5. Batch Management
+   → View all pending stops
+   → Remove individual stops (× button)
+   → Clear all stops at once
+   → Numbered list with timestamps
+
+6. Badge Counter
+   → Shows pending stop count on icon
+   → Red badge with white text
+   → Updates in real-time
+
+7. Configurable App URL
+   → Settings panel (collapsible)
+   → Default: http://localhost:5173
+   → Change for production deployment
+   → Saves preferences locally
+
+8. Smart URL Integration
+   → Opens Route Optimizer in new tab
+   → Passes stops via URL query parameter
+   → Format: ?stops=ADDRESS1|ADDRESS2|ADDRESS3
+   → Pipe-separated, URI-encoded
+
+🔧 TECHNICAL DETAILS
+--------------------
+Manifest Version:     V3 (modern Chrome extension standard)
+Permissions:          contextMenus, activeTab, storage, scripting
+Host Permissions:     <all_urls> (for page scanning)
+Storage:              chrome.storage.local (no external servers)
+Content Security:     No inline scripts, CSP compliant
+
+Address Pattern:
+  • Matches: [Number] [Street] [Type], [City], [State] [ZIP]
+  • Example: "123 Main St, Springfield, IL 62701"
+  • Supports: Street, Ave, Rd, Blvd, Lane, Dr, etc.
+
+URL Format:
+  • Query param: stops
+  • Separator: pipe (|)
+  • Encoding: URI component encoding
+  • Example: APP_URL?stops=123%20Main%20St|456%20Oak%20Ave
+
+Storage Structure:
+  {
+    pendingStops: [
+      { address: "...", addedAt: 1710824400000 }
+    ],
+    appUrl: "http://localhost:5173"
+  }
+
+📦 INSTALLATION
+---------------
+1. Open Chrome → chrome://extensions/
+2. Enable "Developer mode" (top-right toggle)
+3. Click "Load unpacked"
+4. Select the chrome-extension folder
+5. Pin the extension icon to toolbar
+
+🚀 USAGE WORKFLOW
+-----------------
+1. Browse to a page with addresses
+2. Click extension icon
+3. Options:
+   a) Scan page automatically
+   b) Highlight and click addresses
+   c) Enter addresses manually
+   d) Right-click and add selected text
+4. Review pending stops in popup
+5. Click "Send to Route Optimizer"
+6. Route Optimizer opens with pre-loaded stops
+
+🔗 INTEGRATION POINTS
+---------------------
+The Route Optimizer web app needs to:
+
+1. Parse URL query parameter on load:
+   const params = new URLSearchParams(window.location.search);
+   const stops = params.get('stops')?.split('|') || [];
+
+2. Handle decoded addresses:
+   stops.forEach(address => {
+     // Add to route optimizer UI
+   });
+
+3. (Optional) Send confirmation back:
+   window.postMessage({ type: 'stopsReceived', count: stops.length }, '*');
+
+📊 FILE SIZES
+-------------
+manifest.json     ~1 KB    Extension configuration
+background.js     ~2.5 KB  Service worker logic
+content.js        ~4.5 KB  Address detection
+content.css       ~400 B   Highlight styles
+popup.html        ~8 KB    UI markup + inline CSS
+popup.js          ~8 KB    Popup functionality
+icons (total)     ~7.5 KB  PNG files (16, 48, 128)
+README.md         ~7 KB    Documentation
+INSTALL.md        ~2 KB    Installation guide
+
+Total: ~41 KB (excluding documentation)
+
+🎯 NEXT STEPS
+-------------
+1. ✓ Install extension in Chrome
+2. ✓ Configure Route Optimizer URL in settings
+3. → Test on various websites with addresses
+4. → Integrate with Route Optimizer web app
+5. → Deploy to production and update URL
+
+🔒 SECURITY & PRIVACY
+---------------------
+• All data stored locally (Chrome storage API)
+• No external servers or tracking
+• No analytics or telemetry
+• Addresses only sent to configured URL
+• User controls all data (clear anytime)
+• Open source (can audit code)
+
+✅ QUALITY CHECKLIST
+--------------------
+[✓] Manifest V3 compliant
+[✓] Mueller Reports branding applied
+[✓] All permissions justified and minimal
+[✓] Responsive popup design
+[✓] Error handling for all user actions
+[✓] Clean, maintainable vanilla JavaScript
+[✓] Accessible HTML structure
+[✓] Browser compatibility (Chrome 88+)
+[✓] Icons generated (16, 48, 128)
+[✓] Complete documentation
+[✓] Installation guide
+[✓] Usage examples
+
+================================================================================
+READY FOR INSTALLATION AND TESTING
+================================================================================
+
+For detailed instructions, see:
+  • INSTALL.md - Quick start guide
+  • README.md - Complete documentation
+
+Questions? Contact the Mueller Reports development team.

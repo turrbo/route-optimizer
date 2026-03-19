@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mueller Reports Route Optimizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      min-height: 400px;
+      max-height: 600px;
+      font-family: 'Raleway', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #292929;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .header {
+      background: #c8102e;
+      color: white;
+      padding: 16px 20px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .header p {
+      font-size: 12px;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    .container {
+      padding: 20px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #292929;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .add-address-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .input-field {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #c8102e;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: #c8102e;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #a00d25;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: #292929;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #1a1a1a;
+    }
+
+    .btn-outline {
+      background: white;
+      color: #292929;
+      border: 1px solid #ddd;
+    }
+
+    .btn-outline:hover {
+      background: #f5f5f5;
+    }
+
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 11px;
+    }
+
+    .btn-block {
+      width: 100%;
+      padding: 14px;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .stops-list {
+      max-height: 250px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .stop-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: #f9f9f9;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .stop-item:hover {
+      background: #f5f5f5;
+      border-color: #c8102e;
+    }
+
+    .stop-number {
+      min-width: 24px;
+      height: 24px;
+      background: #c8102e;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .stop-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .stop-address {
+      font-size: 13px;
+      line-height: 1.4;
+      word-wrap: break-word;
+      color: #292929;
+    }
+
+    .stop-time {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .stop-remove {
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 0 4px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+
+    .stop-remove:hover {
+      color: #c8102e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .settings-section {
+      border-top: 1px solid #e0e0e0;
+      padding-top: 16px;
+      margin-top: 16px;
+    }
+
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 8px 0;
+      user-select: none;
+    }
+
+    .settings-toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #292929;
+    }
+
+    .settings-toggle-icon {
+      font-size: 12px;
+      color: #999;
+      transition: transform 0.2s;
+    }
+
+    .settings-toggle-icon.open {
+      transform: rotate(180deg);
+    }
+
+    .settings-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+
+    .settings-content.open {
+      max-height: 200px;
+      margin-top: 12px;
+    }
+
+    .settings-field {
+      margin-bottom: 12px;
+    }
+
+    .settings-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #292929;
+      margin-bottom: 6px;
+    }
+
+    .count-badge {
+      background: #c8102e;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      margin-left: 8px;
+    }
+
+    .scan-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .scan-icon {
+      font-size: 14px;
+    }
+
+    /* Scrollbar styling */
+    .stops-list::-webkit-scrollbar,
+    .container::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .stops-list::-webkit-scrollbar-track,
+    .container::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    .stops-list::-webkit-scrollbar-thumb,
+    .container::-webkit-scrollbar-thumb {
+      background: #c8102e;
+      border-radius: 3px;
+    }
+
+    .stops-list::-webkit-scrollbar-thumb:hover,
+    .container::-webkit-scrollbar-thumb:hover {
+      background: #a00d25;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Mueller Reports</h1>
+    <p>Route Optimizer</p>
+  </div>
+
+  <div class="container">
+    <!-- Add Address Section -->
+    <div class="section">
+      <div class="section-title">Add Stop</div>
+      <div class="add-address-form">
+        <input
+          type="text"
+          id="addressInput"
+          class="input-field"
+          placeholder="Enter address..."
+          autocomplete="off"
+        >
+        <button id="addBtn" class="btn btn-primary">Add</button>
+      </div>
+      <button id="scanBtn" class="btn btn-outline btn-block scan-button">
+        <span class="scan-icon">🔍</span>
+        <span>Scan Page for Addresses</span>
+      </button>
+    </div>
+
+    <!-- Stops List Section -->
+    <div class="section">
+      <div class="section-title">
+        Pending Stops
+        <span id="countBadge" class="count-badge" style="display: none;">0</span>
+      </div>
+      <div id="stopsList" class="stops-list"></div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button id="clearBtn" class="btn btn-outline" style="flex: 1;">Clear All</button>
+      <button id="sendBtn" class="btn btn-primary" style="flex: 2;">Send to Route Optimizer</button>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="settings-section">
+      <div class="settings-toggle" id="settingsToggle">
+        <span class="settings-toggle-label">Settings</span>
+        <span class="settings-toggle-icon" id="settingsIcon">▼</span>
+      </div>
+      <div class="settings-content" id="settingsContent">
+        <div class="settings-field">
+          <label class="settings-label" for="appUrlInput">Route Optimizer URL</label>
+          <input
+            type="text"
+            id="appUrlInput"
+            class="input-field"
+            placeholder="http://localhost:5173"
+          >
+        </div>
+        <button id="saveSettingsBtn" class="btn btn-secondary btn-small">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

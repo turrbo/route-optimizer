@@ -1,0 +1,21 @@
+/* Content script styles for address highlighting */
+
+.route-optimizer-highlight {
+  display: inline;
+  position: relative;
+}
+
+.route-optimizer-highlight::after {
+  content: '📍';
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.route-optimizer-highlight:hover::after {
+  opacity: 1;
+}
