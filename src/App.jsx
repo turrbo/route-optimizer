@@ -19,8 +19,16 @@ function App() {
   const showComparison = useRouteStore(s => s.showComparison);
   const routes = useRouteStore(s => s.routes);
   const addStop = useRouteStore(s => s.addStop);
+  const resetAll = useRouteStore(s => s.resetAll);
+  const stops = useRouteStore(s => s.stops);
 
   const [apiKeyInput, setApiKeyInput] = useState(orsApiKey);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  const handleResetAll = () => {
+    resetAll();
+    setShowResetConfirm(false);
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -75,6 +83,11 @@ function App() {
               />
             </div>
           )}
+          {stops.length > 0 && (
+            <button className="reset-btn" onClick={() => setShowResetConfirm(true)}>
+              New Rep
+            </button>
+          )}
           <button className="settings-btn" onClick={() => setShowSettings(true)}>
             Settings
           </button>
@@ -126,6 +139,25 @@ function App() {
           </div>
         )}
       </main>
+
+      {showResetConfirm && (
+        <div className="settings-overlay" onClick={() => setShowResetConfirm(false)}>
+          <div className="settings-modal reset-modal" onClick={e => e.stopPropagation()}>
+            <h2>Start New Rep?</h2>
+            <p className="reset-description">
+              This will clear all stops and routes for every day. Your API key and settings will be kept.
+            </p>
+            <div className="settings-actions">
+              <button className="btn-cancel" onClick={() => setShowResetConfirm(false)}>
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={handleResetAll}>
+                Clear Everything
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showSettings && (
         <div className="settings-overlay" onClick={() => setShowSettings(false)}>

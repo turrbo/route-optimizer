@@ -95,6 +95,14 @@ const useRouteStore = create(
         return { routes: newRoutes };
       }),
 
+      // Reset everything (for switching reps)
+      resetAll: () => set({
+        stops: [],
+        routes: {},
+        showComparison: false,
+        error: null,
+      }),
+
       // Comparison mode
       showComparison: false,
       setShowComparison: (show) => set({ showComparison: show }),

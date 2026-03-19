@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback, useState } from 'react';
 import useRouteStore from '../store/routeStore';
 import { detectDuplicateAreas, formatDistance, formatDuration } from '../utils/routing';
 import './WeekView.css';
@@ -62,6 +62,9 @@ export const WeekView = () => {
     setWeekStartDate,
     routes
   } = useRouteStore();
+
+  const weekViewRef = useRef(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const todayStr = getTodayStr();
 
@@ -145,6 +148,55 @@ export const WeekView = () => {
     setWeekStartDate(getMondayOfWeek(todayStr));
   };
 
+  const handleExportImage = useCallback(async () => {
+    if (!weekViewRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const canvas = await html2canvas(weekViewRef.current, {
+        backgroundColor: '#f5f5f5',
+        scale: 2,
+        useCORS: true,
+      });
+      const link = document.createElement('a');
+      link.download = `week-view-${weekStartDate}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [weekStartDate, isExporting]);
+
+  const handleExportPDF = useCallback(async () => {
+    if (!weekViewRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(weekViewRef.current, {
+        backgroundColor: '#f5f5f5',
+        scale: 2,
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const pdf = new jsPDF({
+        orientation: imgWidth > imgHeight ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [imgWidth, imgHeight],
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`week-view-${weekStartDate}.pdf`);
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [weekStartDate, isExporting]);
+
   // Format week range for header
   const weekRangeText = useMemo(() => {
     const firstDay = weekDays[0];
@@ -153,11 +205,36 @@ export const WeekView = () => {
   }, [weekDays]);
 
   return (
-    <div className="week-view">
+    <div className="week-view" ref={weekViewRef}>
       {/* Week Navigation Header */}
       <div className="week-header">
         <h2 className="week-title">{weekRangeText}</h2>
-        <div className="week-nav-buttons">
+        <div className="week-header-actions">
+          <div className="week-export-buttons">
+            <button
+              className="week-export-btn"
+              onClick={handleExportImage}
+              disabled={isExporting}
+              title="Save as PNG image"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+              </svg>
+              {isExporting ? 'Saving...' : 'Save Image'}
+            </button>
+            <button
+              className="week-export-btn"
+              onClick={handleExportPDF}
+              disabled={isExporting}
+              title="Save as PDF"
+            >
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clipRule="evenodd" />
+              </svg>
+              {isExporting ? 'Saving...' : 'Save PDF'}
+            </button>
+          </div>
+          <div className="week-nav-buttons">
           <button
             className="week-nav-btn"
             onClick={handlePreviousWeek}
@@ -184,6 +261,7 @@ export const WeekView = () => {
               <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" />
             </svg>
           </button>
+        </div>
         </div>
       </div>
 

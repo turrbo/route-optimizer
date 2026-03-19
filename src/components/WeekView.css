@@ -22,6 +22,43 @@
   margin: 0;
 }
 
+.week-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.week-export-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.week-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--mr-white);
+  border: 1px solid var(--mr-gray-300);
+  border-radius: var(--mr-radius);
+  color: var(--mr-gray-700);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.week-export-btn:hover {
+  background: var(--mr-gray-50);
+  border-color: var(--mr-red);
+  color: var(--mr-red);
+}
+
+.week-export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .week-nav-buttons {
   display: flex;
   gap: 0.75rem;
@@ -477,7 +514,8 @@
 
 /* Print Styles */
 @media print {
-  .week-nav-buttons {
+  .week-nav-buttons,
+  .week-export-buttons {
     display: none;
   }
 

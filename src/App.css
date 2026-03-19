@@ -107,6 +107,20 @@
   color: var(--mr-white);
 }
 
+.reset-btn {
+  background: rgba(200,16,46,0.2);
+  color: var(--mr-red);
+  border: 1px solid rgba(200,16,46,0.3);
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.reset-btn:hover {
+  background: rgba(200,16,46,0.35);
+}
+
 /* Main Content */
 .app-main {
   flex: 1;
@@ -207,6 +221,26 @@
 
 .btn-cancel:hover {
   background: var(--mr-gray-100);
+}
+
+.btn-danger {
+  background: var(--mr-red);
+  color: var(--mr-white);
+}
+
+.btn-danger:hover {
+  background: #a00d25;
+}
+
+.reset-modal {
+  max-width: 400px;
+}
+
+.reset-description {
+  font-size: 14px;
+  color: var(--mr-gray-600);
+  line-height: 1.5;
+  margin-bottom: 1rem;
 }
 
 /* Error Banner */
