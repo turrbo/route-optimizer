@@ -75,64 +75,73 @@ export async function optimizeRoute(stops, apiKey) {
     throw new Error(`${missing.length} stop(s) missing coordinates. Wait for geocoding to finish.`);
   }
 
-  const jobs = stops.slice(1, -1).map((stop, idx) => ({
-    id: idx + 1,
-    location: [stop.lng, stop.lat],
-    service: 300,
-    description: stop.address,
-  }));
+  // Use client-side nearest-neighbor + 2-opt optimization
+  // (ORS VROOM optimization endpoint has CORS issues from browser)
+  return await optimizeRouteLocal(stops, apiKey);
+}
 
-  const vehicles = [{
-    id: 1,
-    profile: 'driving-car',
-    start: [stops[0].lng, stops[0].lat],
-    end: [stops[stops.length - 1].lng, stops[stops.length - 1].lat],
-    capacity: [100],
-  }];
+// Haversine distance in meters between two lat/lng points
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
-  let res;
-  try {
-    res = await fetch(`${ORS_BASE}/optimization`, {
-      method: 'POST',
-      headers: {
-        'Authorization': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ jobs, vehicles }),
-    });
-  } catch (networkErr) {
-    throw new Error(`Network error connecting to optimization service: ${networkErr.message}`);
-  }
+// Client-side nearest-neighbor + 2-opt optimization using geographic distance
+async function optimizeRouteLocal(stops, apiKey) {
+  const start = stops[0];
+  const end = stops[stops.length - 1];
+  const middle = stops.slice(1, -1);
 
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '');
-    let detail = `HTTP ${res.status}`;
-    try {
-      const errJson = JSON.parse(errBody);
-      const msg = errJson.error?.message || errJson.error || errJson.message || '';
-      if (msg) detail = typeof msg === 'string' ? msg : JSON.stringify(msg);
-    } catch { /* not JSON */ }
-    if (res.status === 401 || res.status === 403) {
-      throw new Error(`API key invalid or expired (${res.status}). Check Settings and verify your OpenRouteService key.`);
+  // Nearest-neighbor from start through all middle stops
+  const ordered = [];
+  const remaining = [...middle];
+  let current = start;
+
+  while (remaining.length > 0) {
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const d = haversine(current.lat, current.lng, remaining[i].lat, remaining[i].lng);
+      if (d < bestDist) {
+        bestDist = d;
+        bestIdx = i;
+      }
     }
-    throw new Error(`Route optimization failed: ${detail}`);
+    current = remaining.splice(bestIdx, 1)[0];
+    ordered.push(current);
   }
 
-  const data = await res.json();
-  const route = data.routes[0];
-
-  // Extract optimized order: map job IDs back to stop indices
-  const optimizedStopIds = [stops[0].id];
-  for (const step of route.steps) {
-    if (step.type === 'job') {
-      const originalIdx = step.job; // 1-based index into the middle stops
-      optimizedStopIds.push(stops[originalIdx].id);
+  // 2-opt improvement pass
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let i = 0; i < ordered.length - 1; i++) {
+      for (let j = i + 1; j < ordered.length; j++) {
+        const prevI = i === 0 ? start : ordered[i - 1];
+        const nextJ = j === ordered.length - 1 ? end : ordered[j + 1];
+        const currentDist =
+          haversine(prevI.lat, prevI.lng, ordered[i].lat, ordered[i].lng) +
+          haversine(ordered[j].lat, ordered[j].lng, nextJ.lat, nextJ.lng);
+        const swapDist =
+          haversine(prevI.lat, prevI.lng, ordered[j].lat, ordered[j].lng) +
+          haversine(ordered[i].lat, ordered[i].lng, nextJ.lat, nextJ.lng);
+        if (swapDist < currentDist) {
+          // Reverse the segment between i and j
+          const segment = ordered.slice(i, j + 1).reverse();
+          ordered.splice(i, j - i + 1, ...segment);
+          improved = true;
+        }
+      }
     }
   }
-  optimizedStopIds.push(stops[stops.length - 1].id);
 
-  // Now get the actual route geometry for the optimized order
-  const optimizedStops = optimizedStopIds.map(id => stops.find(s => s.id === id));
+  const optimizedStops = [start, ...ordered, end];
+  const optimizedStopIds = optimizedStops.map(s => s.id);
   const routeData = await calculateRoute(optimizedStops, apiKey);
 
   return {
@@ -140,9 +149,9 @@ export async function optimizeRoute(stops, apiKey) {
     optimizedOrder: optimizedStopIds,
     optimizedStops,
     summary: {
-      distance: route.distance || routeData.distance,
-      duration: route.duration || routeData.duration,
-      unassigned: data.unassigned?.length || 0,
+      distance: routeData.distance,
+      duration: routeData.duration,
+      unassigned: 0,
     },
   };
 }
