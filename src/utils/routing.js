@@ -176,15 +176,15 @@ export function detectDuplicateAreas(allStops) {
     dayGroups[stop.dayDate].push(stop);
   }
 
-  // Track which areas appear on which days
-  const areaVisits = {}; // key: "zip:city" -> [dayDate, dayDate, ...]
+  // Track which areas appear on which days (prefer city name over ZIP)
+  const areaVisits = {}; // key: "City, ST" -> [dayDate, dayDate, ...]
   for (const [dayDate, stops] of Object.entries(dayGroups)) {
     const areasThisDay = new Set();
     for (const stop of stops) {
-      const areaKey = stop.zip
-        ? `ZIP ${stop.zip}`
-        : stop.city
+      const areaKey = stop.city
         ? `${stop.city}, ${stop.state}`
+        : stop.zip
+        ? `ZIP ${stop.zip}`
         : null;
       if (areaKey && !areasThisDay.has(areaKey)) {
         areasThisDay.add(areaKey);

@@ -77,10 +77,11 @@ const MapController = ({ stops }) => {
 };
 
 // Create custom numbered marker icon
-const createNumberedIcon = (number) => {
+const createNumberedIcon = (number, isHome = false) => {
+  const className = isHome ? 'marker-number marker-home' : 'marker-number';
   return L.divIcon({
     className: 'custom-marker-icon',
-    html: `<div class="marker-number">${number}</div>`,
+    html: `<div class="${className}">${isHome ? 'H' : number}</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
     popupAnchor: [0, -16],
@@ -98,7 +99,6 @@ const MapView = () => {
   const activeDay = useRouteStore((state) => state.activeDay);
   const getStopsForDay = useRouteStore((state) => state.getStopsForDay);
   const routes = useRouteStore((state) => state.routes);
-  const showComparison = useRouteStore((state) => state.showComparison);
 
   // Get stops for the active day
   const stops = useMemo(() => {
@@ -127,8 +127,24 @@ const MapView = () => {
     return { center: [validStops[0].lat, validStops[0].lng], zoom: 13 };
   }, [stops]);
 
+  const hasOptimized = routeData.optimized.length > 0;
+  const hasOriginal = routeData.original.length > 0;
+
   return (
     <div className="map-view-container">
+      {/* Route legend */}
+      {hasOriginal && hasOptimized && (
+        <div className="map-legend">
+          <div className="legend-item">
+            <span className="legend-line legend-original"></span>
+            <span className="legend-label">Original</span>
+          </div>
+          <div className="legend-item">
+            <span className="legend-line legend-optimized"></span>
+            <span className="legend-label">Optimized</span>
+          </div>
+        </div>
+      )}
       <MapContainer
         center={center}
         zoom={zoom}
@@ -142,27 +158,27 @@ const MapView = () => {
 
         <MapController stops={stops} />
 
-        {/* Render original route */}
+        {/* Render original route (blue, dimmed if optimized exists) */}
         {routeData.original.length > 0 && (
           <Polyline
             positions={routeData.original}
             pathOptions={{
               color: '#2563eb',
-              weight: 4,
-              opacity: 0.7,
+              weight: routeData.optimized.length > 0 ? 3 : 4,
+              opacity: routeData.optimized.length > 0 ? 0.35 : 0.7,
+              dashArray: routeData.optimized.length > 0 ? '8, 6' : undefined,
             }}
           />
         )}
 
-        {/* Render optimized route when comparison is enabled */}
-        {showComparison && routeData.optimized.length > 0 && (
+        {/* Render optimized route (green, always shown when available) */}
+        {routeData.optimized.length > 0 && (
           <Polyline
             positions={routeData.optimized}
             pathOptions={{
               color: '#16a34a',
-              weight: 4,
-              opacity: 0.8,
-              dashArray: '10, 10',
+              weight: 5,
+              opacity: 0.85,
             }}
           />
         )}
@@ -171,15 +187,27 @@ const MapView = () => {
         {stops.map((stop) => {
           if (!stop.lat || !stop.lng) return null;
 
+          // Calculate display number: home gets "H", others numbered 1,2,3... excluding home
+          const isHome = stop.isHomeAddress;
+          let displayNum = stop.stopNumber || '?';
+          if (!isHome) {
+            const nonHomeStops = stops.filter(s => !s.isHomeAddress);
+            const idx = nonHomeStops.findIndex(s => s.id === stop.id);
+            displayNum = idx >= 0 ? idx + 1 : displayNum;
+          }
+
           return (
             <Marker
               key={stop.id}
               position={[stop.lat, stop.lng]}
-              icon={createNumberedIcon(stop.stopNumber || '?')}
+              icon={createNumberedIcon(displayNum, isHome)}
             >
               <Popup>
                 <div className="stop-popup">
-                  <div className="popup-address">{stop.address}</div>
+                  <div className="popup-address">
+                    {isHome && <strong>[Home] </strong>}
+                    {stop.address}
+                  </div>
                   {stop.caseNumber && (
                     <div className="popup-field">
                       <strong>Case #:</strong> {stop.caseNumber}
@@ -190,9 +218,9 @@ const MapView = () => {
                       <strong>Survey Type:</strong> {stop.surveyType}
                     </div>
                   )}
-                  {stop.stopNumber && (
+                  {!isHome && displayNum && (
                     <div className="popup-field">
-                      <strong>Stop #:</strong> {stop.stopNumber}
+                      <strong>Stop #:</strong> {displayNum}
                     </div>
                   )}
                 </div>

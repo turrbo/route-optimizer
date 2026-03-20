@@ -172,6 +172,17 @@ export default function StopPanel() {
     updateStop(stopId, { [field]: value });
   };
 
+  // Build route-ready stop list: home first, stops in order, home last
+  const buildRouteStops = (stopsArr) => {
+    const homeStop = stopsArr.find(s => s.isHomeAddress);
+    const nonHome = stopsArr.filter(s => !s.isHomeAddress);
+    if (homeStop) {
+      // Home as start and end (clone for end so routing gets return trip)
+      return [homeStop, ...nonHome, { ...homeStop, id: homeStop.id + '-return' }];
+    }
+    return stopsArr;
+  };
+
   const handleCalculateRoute = async () => {
     if (stops.length < 2) return;
 
@@ -179,7 +190,8 @@ export default function StopPanel() {
     clearError();
 
     try {
-      const routeData = await calculateRoute(stops, orsApiKey);
+      const routeStops = buildRouteStops(stops);
+      const routeData = await calculateRoute(routeStops, orsApiKey);
       setRoute(activeDay, 'original', routeData);
     } catch (error) {
       console.error('Route calculation error:', error);
@@ -196,7 +208,8 @@ export default function StopPanel() {
     clearError();
 
     try {
-      const optimizedData = await optimizeRoute(stops, orsApiKey);
+      const routeStops = buildRouteStops(stops);
+      const optimizedData = await optimizeRoute(routeStops, orsApiKey);
       setRoute(activeDay, 'optimized', optimizedData);
     } catch (error) {
       console.error('Route optimization error:', error);
@@ -317,11 +330,17 @@ export default function StopPanel() {
           </div>
         ) : (
           <ul className="stop-list">
-            {stops.map((stop, index) => (
+            {stops.map((stop) => {
+              // Home gets "H", others numbered 1,2,3... excluding home stops
+              const nonHomeStops = stops.filter(s => !s.isHomeAddress);
+              const nonHomeIdx = nonHomeStops.findIndex(s => s.id === stop.id);
+              const displayNum = stop.isHomeAddress ? 'H' : (nonHomeIdx >= 0 ? nonHomeIdx + 1 : '?');
+
+              return (
               <li key={stop.id} className={`stop-item${!stop.lat || !stop.lng ? ' geocoding' : ''}${stop.isHomeAddress ? ' home-address' : ''}${stop.mileageFlag ? ' mileage-flag' : ''}`}>
                 <div className="stop-header">
                   <div className={`stop-marker${stop.isHomeAddress ? ' home' : ''}`}>
-                    {stop.isHomeAddress ? 'H' : index + 1}
+                    {displayNum}
                   </div>
                   <div className="stop-info">
                     <div className="stop-address" title={stop.address}>
@@ -407,7 +426,8 @@ export default function StopPanel() {
                   </div>
                 )}
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
