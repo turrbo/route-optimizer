@@ -175,6 +175,12 @@ export default function StopPanel() {
   const handleCalculateRoute = async () => {
     if (stops.length < 2) return;
 
+    const ungeocoded = stops.filter(s => !s.lat || !s.lng);
+    if (ungeocoded.length > 0) {
+      setError(`${ungeocoded.length} stop(s) still geocoding. Please wait a moment and try again.`);
+      return;
+    }
+
     setIsCalculating(true);
     clearError();
 
@@ -183,7 +189,7 @@ export default function StopPanel() {
       setRoute(activeDay, 'original', routeData);
     } catch (error) {
       console.error('Route calculation error:', error);
-      setError('Could not calculate route. Please check your API key and try again.');
+      setError(error.message || 'Could not calculate route. Please check your API key and try again.');
     } finally {
       setIsCalculating(false);
     }
@@ -191,6 +197,12 @@ export default function StopPanel() {
 
   const handleOptimizeRoute = async () => {
     if (stops.length < 3) return;
+
+    const ungeocoded = stops.filter(s => !s.lat || !s.lng);
+    if (ungeocoded.length > 0) {
+      setError(`${ungeocoded.length} stop(s) still geocoding. Please wait a moment and try again.`);
+      return;
+    }
 
     setIsOptimizing(true);
     clearError();
@@ -200,7 +212,7 @@ export default function StopPanel() {
       setRoute(activeDay, 'optimized', optimizedData);
     } catch (error) {
       console.error('Route optimization error:', error);
-      setError('Could not optimize route. Please try again.');
+      setError(error.message || 'Could not optimize route. Please try again.');
     } finally {
       setIsOptimizing(false);
     }

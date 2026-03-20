@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import useRouteStore from './store/routeStore';
+import { geocodeAddress } from './utils/geocoding';
 import MapView from './components/MapView';
 import StopPanel from './components/StopPanel';
 import { WeekView } from './components/WeekView';
@@ -19,6 +20,7 @@ function App() {
   const showComparison = useRouteStore(s => s.showComparison);
   const routes = useRouteStore(s => s.routes);
   const addStop = useRouteStore(s => s.addStop);
+  const updateStop = useRouteStore(s => s.updateStop);
   const resetAll = useRouteStore(s => s.resetAll);
   const stops = useRouteStore(s => s.stops);
 
@@ -32,12 +34,59 @@ function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+
+    async function importAndGeocode(stopList) {
+      // Add all stops first (with addresses but no coordinates)
+      const addedIds = [];
+      for (const stop of stopList) {
+        const id = addStop({
+          address: stop.address || '',
+          caseNumber: stop.caseNumber || '',
+          surveyType: stop.surveyType || 'Exterior',
+          dayDate: stop.dayDate || activeDay,
+        });
+        addedIds.push({ id, address: stop.address });
+      }
+
+      // Then geocode each one sequentially (Nominatim: 1 req/sec)
+      for (const item of addedIds) {
+        try {
+          const geo = await geocodeAddress(item.address);
+          updateStop(item.id, {
+            address: geo.displayName,
+            lat: geo.lat,
+            lng: geo.lng,
+            city: geo.city,
+            state: geo.state,
+            zip: geo.zip,
+          });
+        } catch (err) {
+          console.warn(`Could not geocode "${item.address}":`, err.message);
+        }
+      }
+    }
+
+    // New format: ?data=<base64 JSON> with full stop metadata
+    const dataParam = params.get('data');
+    if (dataParam) {
+      try {
+        const json = decodeURIComponent(escape(atob(dataParam)));
+        const parsed = JSON.parse(json);
+        if (Array.isArray(parsed)) {
+          importAndGeocode(parsed);
+        }
+      } catch (err) {
+        console.error('Failed to parse stop data from extension:', err);
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+
+    // Legacy format: ?stops=address1|address2
     const stopsParam = params.get('stops');
     if (stopsParam) {
       const addresses = stopsParam.split('|').map(a => decodeURIComponent(a.trim())).filter(Boolean);
-      addresses.forEach(address => {
-        addStop({ address, dayDate: activeDay });
-      });
+      importAndGeocode(addresses.map(a => ({ address: a })));
       window.history.replaceState({}, '', window.location.pathname);
     }
   }, []);

@@ -1,8 +1,63 @@
-// Popup logic for Mueller Reports Route Optimizer v2
-// Handles case # lookup via background.js and manual stop management
+// Popup logic for Mueller Reports Route Optimizer v3
+// Case # lookup with auto report type mapping, date extraction, and day sorting
+
+// --- Survey type mapping from Mueller report types ---
+const SURVEY_TYPE_MAP = [
+  { pattern: /elite\s+high\s+value/i, type: 'Elite High Value' },
+  { pattern: /high\s+value/i, type: 'High Value' },
+  { pattern: /interior\s*\/\s*exterior/i, type: 'Interior/Exterior' },
+  { pattern: /interior\s+exterior/i, type: 'Interior/Exterior' },
+  { pattern: /exterior/i, type: 'Exterior' },
+  { pattern: /lender/i, type: 'Lender Appt' },
+  { pattern: /\bLPC\b/i, type: 'LPC' },
+  { pattern: /commercial/i, type: 'Commercial' },
+];
+
+function mapReportType(rawType) {
+  if (!rawType) return 'Exterior';
+  for (const entry of SURVEY_TYPE_MAP) {
+    if (entry.pattern.test(rawType)) return entry.type;
+  }
+  return 'Exterior';
+}
+
+/**
+ * Parse a date string from Mueller (e.g. "03/20/2026", "3/20/26") to YYYY-MM-DD
+ */
+function parseMuellerDate(raw) {
+  if (!raw) return null;
+  const cleaned = raw.trim();
+
+  // Try MM/DD/YYYY or M/D/YYYY
+  let match = cleaned.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (match) {
+    let [, m, d, y] = match;
+    if (y.length === 2) y = (parseInt(y) > 50 ? '19' : '20') + y;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+
+  // Try YYYY-MM-DD already
+  match = cleaned.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return cleaned;
+
+  return null;
+}
+
+/**
+ * Format YYYY-MM-DD as a friendly day string
+ */
+function formatDayLabel(dateStr) {
+  if (!dateStr) return 'No date';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${dayNames[date.getDay()]} ${monthNames[date.getMonth()]} ${d}`;
+}
 
 // DOM Elements - Tabs
-const tabs = document.querySelectorAll('.tab');
+const tabBtns = document.querySelectorAll('.tab');
 const tabContents = document.querySelectorAll('.tab-content');
 
 // DOM Elements - Case Lookup
@@ -55,37 +110,32 @@ function loadData() {
 
 function setupEventListeners() {
   // Tab switching
-  tabs.forEach(tab => {
+  tabBtns.forEach(tab => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.tab;
-      tabs.forEach(t => t.classList.remove('active'));
+      tabBtns.forEach(t => t.classList.remove('active'));
       tabContents.forEach(tc => tc.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById(`tab-${target}`).classList.add('active');
     });
   });
 
-  // Case lookup
   lookupBtn.addEventListener('click', startLookup);
   caseInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.ctrlKey) startLookup();
   });
 
-  // Add results to stops
   addSuccessBtn.addEventListener('click', addResultsToStops);
   clearResultsBtn.addEventListener('click', clearResults);
 
-  // Manual address add
   addBtn.addEventListener('click', addAddress);
   addressInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addAddress();
   });
 
-  // Stop management
   clearBtn.addEventListener('click', clearAll);
   sendBtn.addEventListener('click', sendToRouteOptimizer);
 
-  // Settings
   settingsToggle.addEventListener('click', toggleSettings);
   saveSettingsBtn.addEventListener('click', saveSettings);
 }
@@ -109,7 +159,6 @@ function startLookup() {
     return;
   }
 
-  // Show progress
   lookupBtn.disabled = true;
   lookupBtn.textContent = 'Looking up...';
   progressSection.classList.add('active');
@@ -120,7 +169,6 @@ function startLookup() {
   resultsSection.style.display = 'none';
   lookupResults = [];
 
-  // Send to background script
   chrome.runtime.sendMessage(
     { action: 'lookupCases', caseNumbers },
     (response) => {
@@ -139,7 +187,7 @@ function startLookup() {
 }
 
 // Listen for progress updates from background
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
   if (request.action === 'lookupProgress') {
     const pct = Math.round((request.completed / request.total) * 100);
     progressCount.textContent = `${request.completed} / ${request.total}`;
@@ -165,12 +213,21 @@ function renderResults() {
 
   resultsList.innerHTML = lookupResults.map((result, index) => {
     if (result.success) {
+      const surveyType = mapReportType(result.reportType);
+      const dateStr = parseMuellerDate(result.dateInspected);
+      const dayLabel = formatDayLabel(dateStr);
+
       return `
         <div class="result-item success">
           <span class="result-icon">&#10003;</span>
           <div class="result-content">
             <div class="result-case">Case #${escapeHtml(result.caseNumber)}</div>
             <div class="result-address">${escapeHtml(result.address)}</div>
+            <div class="result-meta">
+              <span class="result-tag type-tag">${escapeHtml(surveyType)}</span>
+              <span class="result-tag date-tag">${escapeHtml(dayLabel)}</span>
+              ${result.reportType ? `<span class="result-raw-type">${escapeHtml(result.reportType)}</span>` : ''}
+            </div>
           </div>
           <button class="result-remove" data-index="${index}" title="Remove">&#215;</button>
         </div>
@@ -188,13 +245,11 @@ function renderResults() {
     }
   }).join('');
 
-  // Enable/disable add button
   addSuccessBtn.disabled = successCount === 0;
   addSuccessBtn.textContent = successCount > 0
     ? `Add ${successCount} Address${successCount > 1 ? 'es' : ''} to Stops`
     : 'No Addresses Found';
 
-  // Remove button listeners
   document.querySelectorAll('#resultsList .result-remove').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const index = parseInt(e.currentTarget.dataset.index);
@@ -214,9 +269,14 @@ function addResultsToStops() {
     );
 
     if (!exists) {
+      const surveyType = mapReportType(result.reportType);
+      const dayDate = parseMuellerDate(result.dateInspected) || null;
+
       pendingStops.push({
         address: result.address,
         caseNumber: result.caseNumber,
+        surveyType: surveyType,
+        dayDate: dayDate,
         addedAt: Date.now()
       });
     }
@@ -226,7 +286,7 @@ function addResultsToStops() {
   clearResults();
 
   // Switch to stops tab
-  tabs.forEach(t => t.classList.remove('active'));
+  tabBtns.forEach(t => t.classList.remove('active'));
   tabContents.forEach(tc => tc.classList.remove('active'));
   document.querySelector('[data-tab="stops"]').classList.add('active');
   document.getElementById('tab-stops').classList.add('active');
@@ -248,6 +308,8 @@ function addAddress() {
   pendingStops.push({
     address: address,
     caseNumber: '',
+    surveyType: 'Exterior',
+    dayDate: null,
     addedAt: Date.now()
   });
 
@@ -275,9 +337,18 @@ function sendToRouteOptimizer() {
     return;
   }
 
-  const addresses = pendingStops.map(stop => stop.address);
-  const stopsParam = encodeURIComponent(addresses.join('|'));
-  const url = `${appUrl}?stops=${stopsParam}`;
+  // Build enriched stop data with all fields
+  const stopData = pendingStops.map(stop => ({
+    address: stop.address,
+    caseNumber: stop.caseNumber || '',
+    surveyType: stop.surveyType || 'Exterior',
+    dayDate: stop.dayDate || null
+  }));
+
+  // Encode as base64 JSON for URL transport
+  const json = JSON.stringify(stopData);
+  const encoded = btoa(unescape(encodeURIComponent(json)));
+  const url = `${appUrl}?data=${encoded}`;
 
   chrome.tabs.create({ url });
 
@@ -290,7 +361,6 @@ function sendToRouteOptimizer() {
 // --- Settings ---
 
 function toggleSettings() {
-  const isOpen = settingsContent.classList.contains('open');
   settingsContent.classList.toggle('open');
   settingsIcon.classList.toggle('open');
 }
@@ -352,16 +422,44 @@ function renderStops() {
     return;
   }
 
-  stopsList.innerHTML = pendingStops.map((stop, index) => `
-    <div class="stop-item">
-      <div class="stop-number">${index + 1}</div>
-      <div class="stop-content">
-        <div class="stop-address">${escapeHtml(stop.address)}</div>
-        ${stop.caseNumber ? `<div class="stop-case">Case #${escapeHtml(stop.caseNumber)}</div>` : ''}
-      </div>
-      <button class="stop-remove" data-index="${index}" title="Remove">&#215;</button>
-    </div>
-  `).join('');
+  // Group stops by dayDate for display
+  const grouped = {};
+  const noDate = [];
+  pendingStops.forEach((stop, index) => {
+    if (stop.dayDate) {
+      if (!grouped[stop.dayDate]) grouped[stop.dayDate] = [];
+      grouped[stop.dayDate].push({ ...stop, _index: index });
+    } else {
+      noDate.push({ ...stop, _index: index });
+    }
+  });
+
+  // Sort days chronologically
+  const sortedDays = Object.keys(grouped).sort();
+
+  let html = '';
+
+  // Render grouped by day
+  sortedDays.forEach(dayDate => {
+    const stops = grouped[dayDate];
+    const label = formatDayLabel(dayDate);
+    html += `<div class="stop-day-header">${escapeHtml(label)} (${dayDate})</div>`;
+    stops.forEach((stop, i) => {
+      html += renderStopItem(stop, i + 1);
+    });
+  });
+
+  // Render undated stops
+  if (noDate.length > 0) {
+    if (sortedDays.length > 0) {
+      html += `<div class="stop-day-header">No Date Assigned</div>`;
+    }
+    noDate.forEach((stop, i) => {
+      html += renderStopItem(stop, i + 1);
+    });
+  }
+
+  stopsList.innerHTML = html;
 
   document.querySelectorAll('.stop-remove').forEach(btn => {
     btn.addEventListener('click', (e) => {
@@ -369,6 +467,22 @@ function renderStops() {
       removeStop(index);
     });
   });
+}
+
+function renderStopItem(stop, num) {
+  return `
+    <div class="stop-item">
+      <div class="stop-number">${num}</div>
+      <div class="stop-content">
+        <div class="stop-address">${escapeHtml(stop.address)}</div>
+        <div class="stop-meta">
+          ${stop.caseNumber ? `<span class="stop-tag">Case #${escapeHtml(stop.caseNumber)}</span>` : ''}
+          ${stop.surveyType ? `<span class="stop-tag type-tag">${escapeHtml(stop.surveyType)}</span>` : ''}
+        </div>
+      </div>
+      <button class="stop-remove" data-index="${stop._index}" title="Remove">&#215;</button>
+    </div>
+  `;
 }
 
 function escapeHtml(text) {

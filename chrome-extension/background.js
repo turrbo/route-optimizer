@@ -75,7 +75,12 @@ async function lookupCaseNumber(caseNumber) {
                       chrome.tabs.sendMessage(tabId, { action: 'scrapeAddress' }, (retryResponse) => {
                         chrome.tabs.remove(tabId).catch(() => {});
                         if (retryResponse && retryResponse.success) {
-                          resolve({ caseNumber, success: true, address: retryResponse.address });
+                          resolve({
+                            caseNumber, success: true,
+                            address: retryResponse.address,
+                            reportType: retryResponse.reportType || null,
+                            dateInspected: retryResponse.dateInspected || null
+                          });
                         } else {
                           resolve({ caseNumber, success: false, error: 'Could not find address on page' });
                         }
@@ -87,7 +92,12 @@ async function lookupCaseNumber(caseNumber) {
                   });
                 } else if (response.success) {
                   chrome.tabs.remove(tabId).catch(() => {});
-                  resolve({ caseNumber, success: true, address: response.address });
+                  resolve({
+                    caseNumber, success: true,
+                    address: response.address,
+                    reportType: response.reportType || null,
+                    dateInspected: response.dateInspected || null
+                  });
                 } else {
                   chrome.tabs.remove(tabId).catch(() => {});
                   resolve({ caseNumber, success: false, error: 'Address not found on page' });

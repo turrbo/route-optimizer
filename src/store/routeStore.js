@@ -38,21 +38,25 @@ const useRouteStore = create(
       // Stops: { id, address, lat, lng, city, state, zip, caseNumber, surveyType, stopNumber, dayDate }
       stops: [],
 
-      addStop: (stop) => set((state) => ({
-        stops: [...state.stops, {
-          id: uuidv4(),
-          address: stop.address || '',
-          lat: stop.lat || null,
-          lng: stop.lng || null,
-          city: stop.city || '',
-          state: stop.state || '',
-          zip: stop.zip || '',
-          caseNumber: stop.caseNumber || '',
-          surveyType: stop.surveyType || '',
-          stopNumber: state.stops.filter(s => s.dayDate === (stop.dayDate || state.activeDay)).length + 1,
-          dayDate: stop.dayDate || state.activeDay,
-        }]
-      })),
+      addStop: (stop) => {
+        const id = uuidv4();
+        set((state) => ({
+          stops: [...state.stops, {
+            id,
+            address: stop.address || '',
+            lat: stop.lat || null,
+            lng: stop.lng || null,
+            city: stop.city || '',
+            state: stop.state || '',
+            zip: stop.zip || '',
+            caseNumber: stop.caseNumber || '',
+            surveyType: stop.surveyType || '',
+            stopNumber: state.stops.filter(s => s.dayDate === (stop.dayDate || state.activeDay)).length + 1,
+            dayDate: stop.dayDate || state.activeDay,
+          }]
+        }));
+        return id;
+      },
 
       updateStop: (id, updates) => set((state) => ({
         stops: state.stops.map(s => s.id === id ? { ...s, ...updates } : s)
