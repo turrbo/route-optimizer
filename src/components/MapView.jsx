@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import useRouteStore from '../store/routeStore';
 import { reverseGeocode } from '../utils/geocoding';
+import { filterOpenCases } from '../utils/excelParser';
 import './MapView.css';
 
 // Component to handle map bounds and events
@@ -88,6 +89,20 @@ const createNumberedIcon = (number, isHome = false) => {
   });
 };
 
+// Create open case pin icon (green for unassigned, light blue for assigned)
+const createCaseIcon = (type) => {
+  const color = type === 'unassigned' ? '#16a34a' : '#38bdf8';
+  return L.divIcon({
+    className: 'custom-marker-icon',
+    html: `<div class="marker-case" style="background:${color}"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10],
+  });
+};
+const caseIconUnassigned = createCaseIcon('unassigned');
+const caseIconAssigned = createCaseIcon('assigned');
+
 // Convert GeoJSON LineString coordinates to Leaflet format
 const convertGeometryToLatLngs = (geometry) => {
   if (!geometry || !geometry.coordinates) return [];
@@ -99,11 +114,26 @@ const MapView = () => {
   const activeDay = useRouteStore((state) => state.activeDay);
   const getStopsForDay = useRouteStore((state) => state.getStopsForDay);
   const routes = useRouteStore((state) => state.routes);
+  const openCases = useRouteStore((state) => state.openCases);
+  const selectedFR = useRouteStore((state) => state.selectedFR);
+  const showOpenCases = useRouteStore((state) => state.showOpenCases);
 
   // Get stops for the active day
   const stops = useMemo(() => {
     return getStopsForDay(activeDay);
   }, [getStopsForDay, activeDay]);
+
+  // Filter open cases for the active day
+  const visibleCases = useMemo(() => {
+    if (!showOpenCases || openCases.length === 0) return { unassigned: [], assigned: [] };
+    const filtered = filterOpenCases(openCases, activeDay);
+    return {
+      unassigned: filtered.filter(c => !c.frAssigned && c.lat && c.lng),
+      assigned: selectedFR
+        ? filtered.filter(c => c.frAssigned === selectedFR && c.lat && c.lng)
+        : [],
+    };
+  }, [openCases, activeDay, selectedFR, showOpenCases]);
 
   // Get route geometries for the active day
   const routeData = useMemo(() => {
@@ -129,20 +159,37 @@ const MapView = () => {
 
   const hasOptimized = routeData.optimized.length > 0;
   const hasOriginal = routeData.original.length > 0;
+  const hasCases = visibleCases.unassigned.length > 0 || visibleCases.assigned.length > 0;
 
   return (
     <div className="map-view-container">
       {/* Route legend */}
-      {hasOriginal && hasOptimized && (
+      {(hasOriginal && hasOptimized || hasCases) && (
         <div className="map-legend">
-          <div className="legend-item">
-            <span className="legend-line legend-original"></span>
-            <span className="legend-label">Original</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-line legend-optimized"></span>
-            <span className="legend-label">Optimized</span>
-          </div>
+          {hasOriginal && hasOptimized && (
+            <>
+              <div className="legend-item">
+                <span className="legend-line legend-original"></span>
+                <span className="legend-label">Original</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-line legend-optimized"></span>
+                <span className="legend-label">Optimized</span>
+              </div>
+            </>
+          )}
+          {visibleCases.unassigned.length > 0 && (
+            <div className="legend-item">
+              <span className="legend-dot legend-dot-green"></span>
+              <span className="legend-label">Unassigned</span>
+            </div>
+          )}
+          {visibleCases.assigned.length > 0 && (
+            <div className="legend-item">
+              <span className="legend-dot legend-dot-blue"></span>
+              <span className="legend-label">FR Assigned</span>
+            </div>
+          )}
         </div>
       )}
       <MapContainer
@@ -183,11 +230,48 @@ const MapView = () => {
           />
         )}
 
-        {/* Render stop markers */}
+        {/* Open case markers - unassigned (green) */}
+        {visibleCases.unassigned.map((c) => (
+          <Marker
+            key={`oc-u-${c.controlNumber}`}
+            position={[c.lat, c.lng]}
+            icon={caseIconUnassigned}
+          >
+            <Popup>
+              <div className="stop-popup">
+                <div className="popup-address">{c.address}, {c.city}, {c.state}</div>
+                <div className="popup-field"><strong>Control #:</strong> {c.controlNumber}</div>
+                <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
+                <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
+                <div className="popup-field" style={{ color: '#16a34a', fontWeight: 600 }}>Unassigned</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Open case markers - assigned to selected FR (light blue) */}
+        {visibleCases.assigned.map((c) => (
+          <Marker
+            key={`oc-a-${c.controlNumber}`}
+            position={[c.lat, c.lng]}
+            icon={caseIconAssigned}
+          >
+            <Popup>
+              <div className="stop-popup">
+                <div className="popup-address">{c.address}, {c.city}, {c.state}</div>
+                <div className="popup-field"><strong>Control #:</strong> {c.controlNumber}</div>
+                <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
+                <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
+                <div className="popup-field" style={{ color: '#38bdf8', fontWeight: 600 }}>FR: {c.frAssigned}</div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Render stop markers (on top of case markers) */}
         {stops.map((stop) => {
           if (!stop.lat || !stop.lng) return null;
 
-          // Calculate display number: home gets "H", others numbered 1,2,3... excluding home
           const isHome = stop.isHomeAddress;
           let displayNum = stop.stopNumber || '?';
           if (!isHome) {

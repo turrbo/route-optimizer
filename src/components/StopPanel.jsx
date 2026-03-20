@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import useRouteStore from '../store/routeStore';
 import { searchAddresses, geocodeAddress } from '../utils/geocoding';
 import { calculateRoute, optimizeRoute, formatDistance, formatDuration } from '../utils/routing';
+import OpenCasesPanel from './OpenCasesPanel';
 import './StopPanel.css';
 
 const SURVEY_TYPES = [
@@ -512,6 +513,8 @@ export default function StopPanel() {
           </div>
         )}
       </div>
+
+      <OpenCasesPanel />
     </div>
   );
 }

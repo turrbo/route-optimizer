@@ -88,6 +88,21 @@
   background-color: #2563eb !important;
 }
 
+/* Open case dot markers */
+.marker-case {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.marker-case:hover {
+  transform: scale(1.4);
+}
+
 /* Map Legend */
 .map-legend {
   position: absolute;
@@ -127,6 +142,21 @@
 
 .legend-optimized {
   background: #16a34a;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot-green {
+  background: #16a34a;
+}
+
+.legend-dot-blue {
+  background: #38bdf8;
 }
 
 .legend-label {

@@ -137,6 +137,16 @@ const useRouteStore = create(
       setError: (err) => set({ error: err }),
       clearError: () => set({ error: null }),
 
+      // Open cases from Excel import
+      openCases: [],         // all parsed cases matching survey types
+      openCasesFRNames: [],  // unique FR names from the file
+      selectedFR: null,      // currently selected FR name to highlight
+      showOpenCases: true,   // whether to show open case pins on map
+      setOpenCases: (cases, frNames) => set({ openCases: cases, openCasesFRNames: frNames }),
+      setSelectedFR: (fr) => set({ selectedFR: fr }),
+      setShowOpenCases: (show) => set({ showOpenCases: show }),
+      clearOpenCases: () => set({ openCases: [], openCasesFRNames: [], selectedFR: null }),
+
       // Settings panel
       showSettings: false,
       setShowSettings: (show) => set({ showSettings: show }),
