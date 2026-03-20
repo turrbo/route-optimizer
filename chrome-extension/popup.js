@@ -1,13 +1,32 @@
-// Popup logic for Mueller Reports Route Optimizer
+// Popup logic for Mueller Reports Route Optimizer v2
+// Handles case # lookup via background.js and manual stop management
 
-// DOM Elements
+// DOM Elements - Tabs
+const tabs = document.querySelectorAll('.tab');
+const tabContents = document.querySelectorAll('.tab-content');
+
+// DOM Elements - Case Lookup
+const caseInput = document.getElementById('caseInput');
+const lookupBtn = document.getElementById('lookupBtn');
+const progressSection = document.getElementById('progressSection');
+const progressText = document.getElementById('progressText');
+const progressCount = document.getElementById('progressCount');
+const progressFill = document.getElementById('progressFill');
+const progressStatus = document.getElementById('progressStatus');
+const resultsSection = document.getElementById('resultsSection');
+const resultsList = document.getElementById('resultsList');
+const addSuccessBtn = document.getElementById('addSuccessBtn');
+const clearResultsBtn = document.getElementById('clearResultsBtn');
+
+// DOM Elements - Stops
 const addressInput = document.getElementById('addressInput');
 const addBtn = document.getElementById('addBtn');
-const scanBtn = document.getElementById('scanBtn');
 const stopsList = document.getElementById('stopsList');
 const clearBtn = document.getElementById('clearBtn');
 const sendBtn = document.getElementById('sendBtn');
 const countBadge = document.getElementById('countBadge');
+
+// DOM Elements - Settings
 const settingsToggle = document.getElementById('settingsToggle');
 const settingsIcon = document.getElementById('settingsIcon');
 const settingsContent = document.getElementById('settingsContent');
@@ -15,190 +34,278 @@ const appUrlInput = document.getElementById('appUrlInput');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
 
 let pendingStops = [];
-let appUrl = 'http://localhost:5173';
+let appUrl = 'https://turrbo.github.io/route-optimizer/';
+let lookupResults = [];
 
-// Initialize popup
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadData();
   setupEventListeners();
 });
 
-// Load data from storage
 function loadData() {
   chrome.storage.local.get(['pendingStops', 'appUrl'], (result) => {
     pendingStops = result.pendingStops || [];
-    appUrl = result.appUrl || 'http://localhost:5173';
-
+    appUrl = result.appUrl || 'https://turrbo.github.io/route-optimizer/';
     appUrlInput.value = appUrl;
     renderStops();
+    updateBadge();
   });
 }
 
-// Setup event listeners
 function setupEventListeners() {
-  // Add address
-  addBtn.addEventListener('click', addAddress);
-  addressInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      addAddress();
-    }
+  // Tab switching
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.tab;
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`tab-${target}`).classList.add('active');
+    });
   });
 
-  // Scan page
-  scanBtn.addEventListener('click', scanPage);
+  // Case lookup
+  lookupBtn.addEventListener('click', startLookup);
+  caseInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.ctrlKey) startLookup();
+  });
 
-  // Clear all
+  // Add results to stops
+  addSuccessBtn.addEventListener('click', addResultsToStops);
+  clearResultsBtn.addEventListener('click', clearResults);
+
+  // Manual address add
+  addBtn.addEventListener('click', addAddress);
+  addressInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addAddress();
+  });
+
+  // Stop management
   clearBtn.addEventListener('click', clearAll);
-
-  // Send to route optimizer
   sendBtn.addEventListener('click', sendToRouteOptimizer);
 
-  // Settings toggle
+  // Settings
   settingsToggle.addEventListener('click', toggleSettings);
-
-  // Save settings
   saveSettingsBtn.addEventListener('click', saveSettings);
 }
 
-// Add address manually
-function addAddress() {
-  const address = addressInput.value.trim();
+// --- Case # Lookup ---
 
-  if (!address) {
+function parseCaseNumbers(text) {
+  return text
+    .split(/[\n,;]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && /^\d+$/.test(s));
+}
+
+function startLookup() {
+  const raw = caseInput.value.trim();
+  if (!raw) return;
+
+  const caseNumbers = parseCaseNumbers(raw);
+  if (caseNumbers.length === 0) {
+    alert('No valid case numbers found. Enter numeric case numbers, one per line or comma-separated.');
     return;
   }
 
-  const newStop = {
-    address: address,
-    addedAt: Date.now()
-  };
+  // Show progress
+  lookupBtn.disabled = true;
+  lookupBtn.textContent = 'Looking up...';
+  progressSection.classList.add('active');
+  progressText.textContent = 'Looking up cases...';
+  progressCount.textContent = `0 / ${caseNumbers.length}`;
+  progressFill.style.width = '0%';
+  progressStatus.textContent = '';
+  resultsSection.style.display = 'none';
+  lookupResults = [];
 
-  pendingStops.push(newStop);
+  // Send to background script
+  chrome.runtime.sendMessage(
+    { action: 'lookupCases', caseNumbers },
+    (response) => {
+      lookupBtn.disabled = false;
+      lookupBtn.textContent = 'Look Up Addresses';
+      progressSection.classList.remove('active');
+
+      if (response && response.results) {
+        lookupResults = response.results;
+        renderResults();
+      } else {
+        alert('Lookup failed. Make sure you are logged into mueller-inc.com.');
+      }
+    }
+  );
+}
+
+// Listen for progress updates from background
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'lookupProgress') {
+    const pct = Math.round((request.completed / request.total) * 100);
+    progressCount.textContent = `${request.completed} / ${request.total}`;
+    progressFill.style.width = `${pct}%`;
+
+    if (request.latest) {
+      if (request.latest.success) {
+        progressStatus.textContent = `Found: ${request.latest.address}`;
+      } else {
+        progressStatus.textContent = `Case ${request.latest.caseNumber}: ${request.latest.error || 'Not found'}`;
+      }
+    }
+  }
+
+  if (request.action === 'addressAdded') {
+    loadData();
+  }
+});
+
+function renderResults() {
+  resultsSection.style.display = 'block';
+  const successCount = lookupResults.filter(r => r.success).length;
+
+  resultsList.innerHTML = lookupResults.map((result, index) => {
+    if (result.success) {
+      return `
+        <div class="result-item success">
+          <span class="result-icon">&#10003;</span>
+          <div class="result-content">
+            <div class="result-case">Case #${escapeHtml(result.caseNumber)}</div>
+            <div class="result-address">${escapeHtml(result.address)}</div>
+          </div>
+          <button class="result-remove" data-index="${index}" title="Remove">&#215;</button>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="result-item error">
+          <span class="result-icon">&#10007;</span>
+          <div class="result-content">
+            <div class="result-case">Case #${escapeHtml(result.caseNumber)}</div>
+            <div class="result-error">${escapeHtml(result.error || 'Address not found')}</div>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+
+  // Enable/disable add button
+  addSuccessBtn.disabled = successCount === 0;
+  addSuccessBtn.textContent = successCount > 0
+    ? `Add ${successCount} Address${successCount > 1 ? 'es' : ''} to Stops`
+    : 'No Addresses Found';
+
+  // Remove button listeners
+  document.querySelectorAll('#resultsList .result-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const index = parseInt(e.currentTarget.dataset.index);
+      lookupResults.splice(index, 1);
+      renderResults();
+    });
+  });
+}
+
+function addResultsToStops() {
+  const successful = lookupResults.filter(r => r.success);
+  if (successful.length === 0) return;
+
+  successful.forEach(result => {
+    const exists = pendingStops.some(stop =>
+      stop.address.toLowerCase() === result.address.toLowerCase()
+    );
+
+    if (!exists) {
+      pendingStops.push({
+        address: result.address,
+        caseNumber: result.caseNumber,
+        addedAt: Date.now()
+      });
+    }
+  });
+
   saveStops();
+  clearResults();
 
+  // Switch to stops tab
+  tabs.forEach(t => t.classList.remove('active'));
+  tabContents.forEach(tc => tc.classList.remove('active'));
+  document.querySelector('[data-tab="stops"]').classList.add('active');
+  document.getElementById('tab-stops').classList.add('active');
+}
+
+function clearResults() {
+  lookupResults = [];
+  resultsSection.style.display = 'none';
+  resultsList.innerHTML = '';
+  caseInput.value = '';
+}
+
+// --- Manual Stops ---
+
+function addAddress() {
+  const address = addressInput.value.trim();
+  if (!address) return;
+
+  pendingStops.push({
+    address: address,
+    caseNumber: '',
+    addedAt: Date.now()
+  });
+
+  saveStops();
   addressInput.value = '';
   addressInput.focus();
 }
 
-// Scan page for addresses
-async function scanPage() {
-  scanBtn.disabled = true;
-  scanBtn.textContent = 'Scanning...';
-
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-    chrome.tabs.sendMessage(tab.id, { action: 'scanForAddresses' }, (response) => {
-      if (chrome.runtime.lastError) {
-        console.error('Error scanning page:', chrome.runtime.lastError);
-        alert('Could not scan page. Please refresh the page and try again.');
-        scanBtn.disabled = false;
-        scanBtn.innerHTML = '<span class="scan-icon">🔍</span><span>Scan Page for Addresses</span>';
-        return;
-      }
-
-      if (response && response.addresses && response.addresses.length > 0) {
-        // Add found addresses
-        const addedCount = response.addresses.length;
-
-        response.addresses.forEach(address => {
-          // Check if address already exists
-          const exists = pendingStops.some(stop =>
-            stop.address.toLowerCase() === address.toLowerCase()
-          );
-
-          if (!exists) {
-            pendingStops.push({
-              address: address,
-              addedAt: Date.now()
-            });
-          }
-        });
-
-        saveStops();
-        alert(`Found and added ${addedCount} address(es) from the page.`);
-      } else {
-        alert('No addresses found on this page.');
-      }
-
-      scanBtn.disabled = false;
-      scanBtn.innerHTML = '<span class="scan-icon">🔍</span><span>Scan Page for Addresses</span>';
-    });
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Could not scan page. Please try again.');
-    scanBtn.disabled = false;
-    scanBtn.innerHTML = '<span class="scan-icon">🔍</span><span>Scan Page for Addresses</span>';
-  }
-}
-
-// Remove a specific stop
 function removeStop(index) {
   pendingStops.splice(index, 1);
   saveStops();
 }
 
-// Clear all stops
 function clearAll() {
-  if (pendingStops.length === 0) {
-    return;
-  }
-
+  if (pendingStops.length === 0) return;
   if (confirm(`Clear all ${pendingStops.length} pending stop(s)?`)) {
     pendingStops = [];
     saveStops();
   }
 }
 
-// Send stops to route optimizer
 function sendToRouteOptimizer() {
   if (pendingStops.length === 0) {
-    alert('No stops to send. Please add at least one address.');
+    alert('No stops to send. Look up case numbers or add addresses first.');
     return;
   }
 
-  // Prepare URL with stops as pipe-separated query parameter
   const addresses = pendingStops.map(stop => stop.address);
   const stopsParam = encodeURIComponent(addresses.join('|'));
   const url = `${appUrl}?stops=${stopsParam}`;
 
-  // Open the route optimizer in a new tab
-  chrome.tabs.create({ url: url });
+  chrome.tabs.create({ url });
 
-  // Optionally clear stops after sending
   if (confirm('Stops sent to Route Optimizer. Clear the list?')) {
     pendingStops = [];
     saveStops();
   }
 }
 
-// Toggle settings panel
+// --- Settings ---
+
 function toggleSettings() {
   const isOpen = settingsContent.classList.contains('open');
-
-  if (isOpen) {
-    settingsContent.classList.remove('open');
-    settingsIcon.classList.remove('open');
-  } else {
-    settingsContent.classList.add('open');
-    settingsIcon.classList.add('open');
-  }
+  settingsContent.classList.toggle('open');
+  settingsIcon.classList.toggle('open');
 }
 
-// Save settings
 function saveSettings() {
   const newUrl = appUrlInput.value.trim();
-
   if (!newUrl) {
     alert('Please enter a valid URL.');
     return;
   }
 
-  // Basic URL validation
   try {
     new URL(newUrl);
-  } catch (error) {
-    alert('Please enter a valid URL (e.g., http://localhost:5173)');
+  } catch {
+    alert('Please enter a valid URL (e.g., https://turrbo.github.io/route-optimizer/)');
     return;
   }
 
@@ -211,34 +318,34 @@ function saveSettings() {
   });
 }
 
-// Save stops to storage
+// --- Storage & Rendering ---
+
 function saveStops() {
   chrome.storage.local.set({ pendingStops }, () => {
     renderStops();
-
-    // Update badge
+    updateBadge();
     chrome.runtime.sendMessage({ action: 'updateBadge' });
   });
 }
 
-// Render stops list
-function renderStops() {
-  // Update count badge
+function updateBadge() {
   if (pendingStops.length > 0) {
-    countBadge.textContent = pendingStops.length;
+    countBadge.textContent = `${pendingStops.length} stop${pendingStops.length > 1 ? 's' : ''}`;
     countBadge.style.display = 'inline-block';
   } else {
     countBadge.style.display = 'none';
   }
+}
 
-  // Render list
+function renderStops() {
+  updateBadge();
+
   if (pendingStops.length === 0) {
     stopsList.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📍</div>
         <div class="empty-state-text">
           No pending stops.<br>
-          Add an address or scan a page to get started.
+          Use Case # Lookup or add addresses manually.
         </div>
       </div>
     `;
@@ -250,51 +357,22 @@ function renderStops() {
       <div class="stop-number">${index + 1}</div>
       <div class="stop-content">
         <div class="stop-address">${escapeHtml(stop.address)}</div>
-        <div class="stop-time">${formatTime(stop.addedAt)}</div>
+        ${stop.caseNumber ? `<div class="stop-case">Case #${escapeHtml(stop.caseNumber)}</div>` : ''}
       </div>
-      <button class="stop-remove" data-index="${index}" title="Remove stop">×</button>
+      <button class="stop-remove" data-index="${index}" title="Remove">&#215;</button>
     </div>
   `).join('');
 
-  // Add remove listeners
   document.querySelectorAll('.stop-remove').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const index = parseInt(e.target.dataset.index);
+      const index = parseInt(e.currentTarget.dataset.index);
       removeStop(index);
     });
   });
 }
 
-// Format timestamp
-function formatTime(timestamp) {
-  const now = Date.now();
-  const diff = now - timestamp;
-
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) {
-    return 'Just now';
-  } else if (minutes < 60) {
-    return `${minutes} min ago`;
-  } else if (hours < 24) {
-    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  } else {
-    return `${days} day${days > 1 ? 's' : ''} ago`;
-  }
-}
-
-// Escape HTML to prevent XSS
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
-
-// Listen for messages from background script
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'addressAdded') {
-    loadData(); // Reload data when address is added via context menu
-  }
-});

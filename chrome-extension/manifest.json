@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Mueller Reports Route Optimizer",
-  "version": "1.0.0",
-  "description": "Capture addresses from web pages for route optimization",
+  "version": "2.0.0",
+  "description": "Look up case addresses from Mueller Inc and send them to Route Optimizer",
   "permissions": [
     "contextMenus",
     "activeTab",
@@ -10,6 +10,7 @@
     "scripting"
   ],
   "host_permissions": [
+    "https://www.mueller-inc.com/*",
     "<all_urls>"
   ],
   "background": {
@@ -17,9 +18,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "matches": ["https://www.mueller-inc.com/*"],
+      "js": ["mueller-scraper.js"],
+      "run_at": "document_idle"
     }
   ],
   "action": {

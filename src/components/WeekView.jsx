@@ -4,17 +4,35 @@ import { detectDuplicateAreas, formatDistance, formatDuration } from '../utils/r
 import './WeekView.css';
 
 /**
+ * Parse YYYY-MM-DD string as local date (not UTC)
+ */
+const parseLocalDate = (dateStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+/**
+ * Format a local Date as YYYY-MM-DD
+ */
+const formatDateStr = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/**
  * Generate array of 5 weekday dates (Mon-Fri) from a start date
  */
 const getWeekDays = (startDateStr) => {
-  const startDate = new Date(startDateStr);
+  const startDate = parseLocalDate(startDateStr);
   const days = [];
 
   for (let i = 0; i < 5; i++) {
     const date = new Date(startDate);
     date.setDate(startDate.getDate() + i);
     days.push({
-      date: date.toISOString().split('T')[0],
+      date: formatDateStr(date),
       dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
       dayNum: date.getDate(),
       monthName: date.toLocaleDateString('en-US', { month: 'short' })
@@ -28,28 +46,28 @@ const getWeekDays = (startDateStr) => {
  * Get today's date in YYYY-MM-DD format
  */
 const getTodayStr = () => {
-  return new Date().toISOString().split('T')[0];
+  return formatDateStr(new Date());
 };
 
 /**
  * Get the Monday of the current week
  */
 const getMondayOfWeek = (dateStr) => {
-  const date = new Date(dateStr);
+  const date = parseLocalDate(dateStr);
   const day = date.getDay();
   const diff = day === 0 ? -6 : 1 - day; // Adjust to Monday
   const monday = new Date(date);
   monday.setDate(date.getDate() + diff);
-  return monday.toISOString().split('T')[0];
+  return formatDateStr(monday);
 };
 
 /**
  * Navigate to previous/next week
  */
 const navigateWeek = (currentStart, direction) => {
-  const date = new Date(currentStart);
+  const date = parseLocalDate(currentStart);
   date.setDate(date.getDate() + (direction * 7));
-  return date.toISOString().split('T')[0];
+  return formatDateStr(date);
 };
 
 export const WeekView = () => {

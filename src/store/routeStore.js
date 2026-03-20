@@ -2,6 +2,14 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
 
+/** Format a local Date as YYYY-MM-DD (avoids UTC shift from toISOString) */
+const toLocalDateStr = (d) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
 const useRouteStore = create(
   persist(
     (set, get) => ({
@@ -14,15 +22,16 @@ const useRouteStore = create(
       setActiveView: (view) => set({ activeView: view }),
 
       // Current day for week view (ISO date string)
-      activeDay: new Date().toISOString().split('T')[0],
+      activeDay: toLocalDateStr(new Date()),
       setActiveDay: (day) => set({ activeDay: day }),
 
-      // Week start date
+      // Week start date (Monday of current week)
       weekStartDate: (() => {
         const d = new Date();
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        return new Date(d.setDate(diff)).toISOString().split('T')[0];
+        const dow = d.getDay();
+        const diff = d.getDate() - dow + (dow === 0 ? -6 : 1);
+        const monday = new Date(d.getFullYear(), d.getMonth(), diff);
+        return toLocalDateStr(monday);
       })(),
       setWeekStartDate: (date) => set({ weekStartDate: date }),
 
