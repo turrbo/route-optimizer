@@ -103,10 +103,10 @@
   border-color: #a50d25;
 }
 
-/* Week Grid - 5 Day Cards */
+/* Week Grid - 5 weekday cards + 2 weekend cards */
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.25rem;
   margin-bottom: 2rem;
 }
@@ -114,6 +114,11 @@
 @media (min-width: 1024px) {
   .week-grid {
     grid-template-columns: repeat(5, 1fr);
+  }
+
+  /* Weekend cards span into a separate row of 2 */
+  .day-card.is-weekend {
+    grid-column: span 1;
   }
 }
 
@@ -143,6 +148,19 @@
   outline: none;
   border-color: var(--mr-blue);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Weekend Day Card */
+.day-card.is-weekend {
+  opacity: 0.85;
+}
+
+.day-card.is-weekend .day-card-header {
+  background: var(--mr-gray-700, #404040);
+}
+
+.day-card.is-weekend:hover {
+  opacity: 1;
 }
 
 /* Day Card Header */

@@ -22,20 +22,22 @@ const formatDateStr = (date) => {
 };
 
 /**
- * Generate array of 5 weekday dates (Mon-Fri) from a start date
+ * Generate array of 7 dates (Mon-Fri + Sat-Sun) from a start date
  */
 const getWeekDays = (startDateStr) => {
   const startDate = parseLocalDate(startDateStr);
   const days = [];
 
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 7; i++) {
     const date = new Date(startDate);
     date.setDate(startDate.getDate() + i);
+    const dow = date.getDay();
     days.push({
       date: formatDateStr(date),
       dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
       dayNum: date.getDate(),
-      monthName: date.toLocaleDateString('en-US', { month: 'short' })
+      monthName: date.toLocaleDateString('en-US', { month: 'short' }),
+      isWeekend: dow === 0 || dow === 6
     });
   }
 
@@ -218,7 +220,7 @@ export const WeekView = () => {
   // Format week range for header
   const weekRangeText = useMemo(() => {
     const firstDay = weekDays[0];
-    const lastDay = weekDays[4];
+    const lastDay = weekDays[weekDays.length - 1];
     return `Week of ${firstDay.monthName} ${firstDay.dayNum} - ${lastDay.monthName} ${lastDay.dayNum}`;
   }, [weekDays]);
 
@@ -295,7 +297,7 @@ export const WeekView = () => {
           return (
             <div
               key={day.date}
-              className={`day-card ${isToday ? 'is-today' : ''} ${day.date === activeDay ? 'is-active' : ''}`}
+              className={`day-card ${isToday ? 'is-today' : ''} ${day.date === activeDay ? 'is-active' : ''} ${day.isWeekend ? 'is-weekend' : ''}`}
               onClick={() => handleDayClick(day.date)}
               role="button"
               tabIndex={0}
