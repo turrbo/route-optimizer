@@ -17,7 +17,6 @@ function App() {
   const setShowSettings = useRouteStore(s => s.setShowSettings);
   const error = useRouteStore(s => s.error);
   const clearError = useRouteStore(s => s.clearError);
-  const showComparison = useRouteStore(s => s.showComparison);
   const routes = useRouteStore(s => s.routes);
   const addStop = useRouteStore(s => s.addStop);
   const updateStop = useRouteStore(s => s.updateStop);
@@ -188,20 +187,6 @@ function App() {
             <StopPanel />
             <div className="map-area">
               <MapView />
-              {hasRoutes && (
-                <div className="route-legend">
-                  <div className="legend-item">
-                    <div className="legend-line original" />
-                    <span>Original Route</span>
-                  </div>
-                  {showComparison && dayRoutes?.optimized && (
-                    <div className="legend-item">
-                      <div className="legend-line optimized" />
-                      <span>Optimized Route</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         ) : (
