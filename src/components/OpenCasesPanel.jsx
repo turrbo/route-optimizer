@@ -6,44 +6,38 @@ import './OpenCasesPanel.css';
 
 // In-memory geocode cache keyed by "address, city, state"
 const geocodeCache = {};
-let geocodeQueue = [];
-let geocodeRunning = false;
+let geocodeAbort = false;
 
-function enqueueGeocode(cases, onUpdate) {
-  // Only geocode cases that aren't already cached or in-flight
-  const toGeocode = cases.filter(c => {
+async function geocodeCases(cases, geocodeCaseFn) {
+  geocodeAbort = true; // cancel any previous run
+  await new Promise(r => setTimeout(r, 50)); // let previous loop exit
+  geocodeAbort = false;
+
+  for (const c of cases) {
+    if (geocodeAbort) return;
     const key = `${c.address}, ${c.city}, ${c.state}`;
-    return !geocodeCache[key] && !c.lat;
-  });
 
-  if (toGeocode.length === 0) return;
+    // Already geocoded in store
+    if (c.lat && c.lng) continue;
 
-  geocodeQueue = toGeocode;
-  if (!geocodeRunning) runGeocodeQueue(onUpdate);
-}
-
-async function runGeocodeQueue(onUpdate) {
-  geocodeRunning = true;
-  while (geocodeQueue.length > 0) {
-    const c = geocodeQueue.shift();
-    const key = `${c.address}, ${c.city}, ${c.state}`;
+    // Check cache
     if (geocodeCache[key]) {
-      c.lat = geocodeCache[key].lat;
-      c.lng = geocodeCache[key].lng;
-      onUpdate();
+      if (geocodeCache[key].lat) {
+        geocodeCaseFn(c.controlNumber, geocodeCache[key].lat, geocodeCache[key].lng);
+      }
       continue;
     }
+
     try {
       const geo = await geocodeAddress(key);
       geocodeCache[key] = { lat: geo.lat, lng: geo.lng };
-      c.lat = geo.lat;
-      c.lng = geo.lng;
+      if (!geocodeAbort) {
+        geocodeCaseFn(c.controlNumber, geo.lat, geo.lng);
+      }
     } catch {
       geocodeCache[key] = { lat: null, lng: null };
     }
-    onUpdate();
   }
-  geocodeRunning = false;
 }
 
 export default function OpenCasesBar() {
@@ -56,11 +50,11 @@ export default function OpenCasesBar() {
   const setSelectedFR = useRouteStore(s => s.setSelectedFR);
   const setShowOpenCases = useRouteStore(s => s.setShowOpenCases);
   const clearOpenCases = useRouteStore(s => s.clearOpenCases);
+  const geocodeCase = useRouteStore(s => s.geocodeCase);
   const setError = useRouteStore(s => s.setError);
 
   const [isLoading, setIsLoading] = useState(false);
   const [fileName, setFileName] = useState('');
-  const [geocodeTick, setGeocodeTick] = useState(0);
   const [showList, setShowList] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -84,7 +78,7 @@ export default function OpenCasesBar() {
       // Apply cached geocode results immediately
       for (const c of cases) {
         const key = `${c.address}, ${c.city}, ${c.state}`;
-        if (geocodeCache[key]) {
+        if (geocodeCache[key] && geocodeCache[key].lat) {
           c.lat = geocodeCache[key].lat;
           c.lng = geocodeCache[key].lng;
         }
@@ -115,19 +109,22 @@ export default function OpenCasesBar() {
     [filteredCases, selectedFR]
   );
 
-  // Geocode unassigned cases + selected FR's cases for map display
+  // Geocode visible cases: unassigned + selected FR's assigned
   const casesToGeocode = useMemo(
-    () => [...unassignedCases, ...assignedCases],
+    () => [...unassignedCases, ...assignedCases].filter(c => !c.lat || !c.lng),
     [unassignedCases, assignedCases]
   );
 
   useEffect(() => {
     if (casesToGeocode.length === 0) return;
-    enqueueGeocode(casesToGeocode, () => setGeocodeTick(t => t + 1));
-  }, [casesToGeocode]);
+    geocodeCases(casesToGeocode, geocodeCase);
+    return () => { geocodeAbort = true; };
+  }, [casesToGeocode, geocodeCase]);
 
-  const totalGeocoded = casesToGeocode.filter(c => c.lat && c.lng).length;
-  const isGeocoding = totalGeocoded < casesToGeocode.length && casesToGeocode.length > 0;
+  const totalVisible = unassignedCases.length + assignedCases.length;
+  const totalGeocoded = unassignedCases.filter(c => c.lat && c.lng).length +
+                        assignedCases.filter(c => c.lat && c.lng).length;
+  const isGeocoding = totalGeocoded < totalVisible && totalVisible > 0;
 
   const handleClear = () => {
     clearOpenCases();
@@ -183,7 +180,7 @@ export default function OpenCasesBar() {
 
         {isGeocoding && (
           <span className="oc-bar-geocoding">
-            Mapping {totalGeocoded}/{casesToGeocode.length}
+            Mapping {totalGeocoded}/{totalVisible}
           </span>
         )}
 

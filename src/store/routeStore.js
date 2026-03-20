@@ -146,6 +146,12 @@ const useRouteStore = create(
       setSelectedFR: (fr) => set({ selectedFR: fr }),
       setShowOpenCases: (show) => set({ showOpenCases: show }),
       clearOpenCases: () => set({ openCases: [], openCasesFRNames: [], selectedFR: null }),
+      // Update geocode coords on a case (creates new array ref so MapView re-renders)
+      geocodeCase: (controlNumber, lat, lng) => set((state) => ({
+        openCases: state.openCases.map(c =>
+          c.controlNumber === controlNumber ? { ...c, lat, lng } : c
+        ),
+      })),
 
       // Settings panel
       showSettings: false,
