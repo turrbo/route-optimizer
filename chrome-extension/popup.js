@@ -88,6 +88,11 @@ const importSummary = document.getElementById('importSummary');
 const importList = document.getElementById('importList');
 const importAddBtn = document.getElementById('importAddBtn');
 const importClearBtn = document.getElementById('importClearBtn');
+const excelProgressSection = document.getElementById('excelProgressSection');
+const excelProgressText = document.getElementById('excelProgressText');
+const excelProgressCount = document.getElementById('excelProgressCount');
+const excelProgressFill = document.getElementById('excelProgressFill');
+const excelProgressStatus = document.getElementById('excelProgressStatus');
 
 // Case Lookup
 const caseInput = document.getElementById('caseInput');
@@ -123,6 +128,7 @@ let pendingStops = [];
 let appUrl = 'https://turrbo.github.io/route-optimizer/';
 let lookupResults = [];
 let excelData = []; // Parsed rows from Excel
+let currentHomeAddresses = {}; // Stored for re-rendering during lookup
 
 // ===================== INIT =====================
 
@@ -305,7 +311,12 @@ function parseExcelRows(rows) {
     }
   });
 
+  // Store for re-rendering during lookup progress
+  currentHomeAddresses = homeAddresses;
+
+  // Show preview and automatically start looking up addresses
   renderExcelPreview(homeAddresses);
+  startExcelLookup(homeAddresses);
 }
 
 function renderExcelPreview(homeAddresses) {
@@ -314,6 +325,7 @@ function renderExcelPreview(homeAddresses) {
   const totalCases = excelData.length;
   const days = [...new Set(excelData.map(d => d.dayDate).filter(Boolean))].sort();
   const flaggedCount = excelData.filter(d => d.mileageFlag).length;
+  const foundCount = excelData.filter(d => d.resolvedAddress).length;
 
   importSummary.innerHTML = `
     <div class="summary-card">
@@ -323,6 +335,10 @@ function renderExcelPreview(homeAddresses) {
     <div class="summary-card">
       <div class="num">${days.length}</div>
       <div class="label">Days</div>
+    </div>
+    <div class="summary-card">
+      <div class="num">${foundCount}/${totalCases}</div>
+      <div class="label">Addresses</div>
     </div>
     <div class="summary-card flagged">
       <div class="num">${flaggedCount}</div>
@@ -353,11 +369,31 @@ function renderExcelPreview(homeAddresses) {
         }
       }
 
+      // Address status
+      let addressLine = '';
+      if (item.resolvedAddress) {
+        const short = item.resolvedAddress.length > 60
+          ? item.resolvedAddress.substring(0, 60) + '...'
+          : item.resolvedAddress;
+        addressLine = `<span class="address-found">${escapeHtml(short)}</span>`;
+      } else if (item.lookupError) {
+        addressLine = `<span class="address-error">${escapeHtml(item.lookupError)}</span>`;
+      } else if (excelLookupInProgress) {
+        addressLine = `<span class="address-pending">Looking up...</span>`;
+      } else {
+        addressLine = `<span class="address-pending">Pending lookup</span>`;
+      }
+
       html += `
         <div class="import-item${flagClass}">
-          <span class="case-num">#${escapeHtml(item.controlNum)}</span>
-          <span class="survey-badge">${escapeHtml(item.surveyType)}</span>
-          ${mileageBadge}
+          <div class="item-details">
+            <div>
+              <span class="case-num">#${escapeHtml(item.controlNum)}</span>
+              <span class="survey-badge">${escapeHtml(item.surveyType)}</span>
+              ${mileageBadge}
+            </div>
+            ${addressLine}
+          </div>
         </div>
       `;
     });
@@ -371,10 +407,21 @@ function renderExcelPreview(homeAddresses) {
     html += `<div class="import-day-group">`;
     html += `<div class="import-day-header"><span>No Date &mdash; ${undated.length} cases</span></div>`;
     undated.forEach(item => {
+      let addressLine = '';
+      if (item.resolvedAddress) {
+        addressLine = `<span class="address-found">${escapeHtml(item.resolvedAddress)}</span>`;
+      } else if (item.lookupError) {
+        addressLine = `<span class="address-error">${escapeHtml(item.lookupError)}</span>`;
+      }
       html += `
         <div class="import-item">
-          <span class="case-num">#${escapeHtml(item.controlNum)}</span>
-          <span class="survey-badge">${escapeHtml(item.surveyType)}</span>
+          <div class="item-details">
+            <div>
+              <span class="case-num">#${escapeHtml(item.controlNum)}</span>
+              <span class="survey-badge">${escapeHtml(item.surveyType)}</span>
+            </div>
+            ${addressLine}
+          </div>
         </div>
       `;
     });
@@ -382,16 +429,113 @@ function renderExcelPreview(homeAddresses) {
   }
 
   importList.innerHTML = html;
-  importAddBtn.disabled = excelData.length === 0;
-  importAddBtn.textContent = `Add ${totalCases} Cases to Stops`;
+
+  // Only enable Add button when lookup is done and we have at least some addresses
+  const allDone = !excelLookupInProgress;
+  importAddBtn.disabled = !allDone || foundCount === 0;
+  if (excelLookupInProgress) {
+    importAddBtn.textContent = 'Looking up addresses...';
+  } else if (foundCount === 0) {
+    importAddBtn.textContent = 'No addresses found';
+  } else {
+    importAddBtn.textContent = `Add ${foundCount} Addresses to Stops`;
+  }
+}
+
+// --- Auto address lookup after Excel parse ---
+
+let excelLookupInProgress = false;
+
+function startExcelLookup(homeAddresses) {
+  const caseNumbers = excelData.map(d => d.controlNum).filter(c => /^\d+$/.test(c));
+  if (caseNumbers.length === 0) {
+    renderExcelPreview(homeAddresses);
+    return;
+  }
+
+  excelLookupInProgress = true;
+  excelProgressSection.classList.add('active');
+  excelProgressText.textContent = 'Looking up addresses on Mueller Inc...';
+  excelProgressCount.textContent = `0 / ${caseNumbers.length}`;
+  excelProgressFill.style.width = '0%';
+  excelProgressStatus.textContent = 'Make sure you are logged into mueller-inc.com';
+
+  // Disable buttons during lookup
+  importAddBtn.disabled = true;
+  importAddBtn.textContent = 'Looking up addresses...';
+  importClearBtn.disabled = true;
+
+  renderExcelPreview(homeAddresses);
+
+  chrome.runtime.sendMessage(
+    { action: 'lookupCases', caseNumbers },
+    (response) => {
+      excelLookupInProgress = false;
+      excelProgressSection.classList.remove('active');
+      importClearBtn.disabled = false;
+
+      if (response && response.results) {
+        // Merge results into excelData
+        response.results.forEach(result => {
+          const match = excelData.find(d => d.controlNum === result.caseNumber);
+          if (match) {
+            if (result.success) {
+              match.resolvedAddress = result.address;
+              match.lookupError = null;
+            } else {
+              match.resolvedAddress = null;
+              match.lookupError = result.error || 'Not found';
+            }
+          }
+        });
+      } else {
+        // All failed - mark as error
+        excelData.forEach(d => {
+          if (!d.resolvedAddress) {
+            d.lookupError = 'Lookup failed - are you logged into mueller-inc.com?';
+          }
+        });
+      }
+
+      renderExcelPreview(homeAddresses);
+    }
+  );
+}
+
+// Listen for Excel lookup progress
+function handleExcelLookupProgress(request) {
+  if (request.action === 'lookupProgress' && excelLookupInProgress) {
+    const pct = Math.round((request.completed / request.total) * 100);
+    excelProgressCount.textContent = `${request.completed} / ${request.total}`;
+    excelProgressFill.style.width = `${pct}%`;
+
+    // Update the individual item as results come in
+    if (request.latest) {
+      const match = excelData.find(d => d.controlNum === request.latest.caseNumber);
+      if (match) {
+        if (request.latest.success) {
+          match.resolvedAddress = request.latest.address;
+          match.lookupError = null;
+          excelProgressStatus.textContent = `Found: ${request.latest.address.substring(0, 50)}...`;
+        } else {
+          match.lookupError = request.latest.error || 'Not found';
+          excelProgressStatus.textContent = `Case ${request.latest.caseNumber}: ${request.latest.error || 'Not found'}`;
+        }
+      }
+      // Re-render preview to show updated addresses
+      renderExcelPreview(currentHomeAddresses);
+    }
+  }
 }
 
 function addExcelToStops() {
-  if (excelData.length === 0) return;
+  // Only add items that have resolved addresses
+  const resolved = excelData.filter(d => d.resolvedAddress);
+  if (resolved.length === 0) return;
 
   // Group by day to add home address stops
   const dayGroups = {};
-  excelData.forEach(item => {
+  resolved.forEach(item => {
     const key = item.dayDate || '_nodate';
     if (!dayGroups[key]) dayGroups[key] = [];
     dayGroups[key].push(item);
@@ -423,14 +567,14 @@ function addExcelToStops() {
       }
     }
 
-    // Add each case as a stop (address will be looked up by the Route Optimizer via geocoding)
+    // Add each case with the resolved address from Mueller lookup
     items.forEach(item => {
       const exists = pendingStops.some(s =>
         s.caseNumber === item.controlNum && s.dayDate === item.dayDate
       );
       if (!exists) {
         pendingStops.push({
-          address: `Case #${item.controlNum}`, // Placeholder - needs Mueller lookup or manual entry
+          address: item.resolvedAddress,
           caseNumber: item.controlNum,
           surveyType: item.surveyType,
           dayDate: item.dayDate,
@@ -438,7 +582,6 @@ function addExcelToStops() {
           actualMileage: item.actualMileage,
           estimatedMileage: item.estMileage,
           mileageFlag: item.mileageFlag,
-          needsLookup: true, // Flag for case address lookup
           addedAt: Date.now(),
         });
       }
@@ -457,9 +600,12 @@ function addExcelToStops() {
 
 function clearExcelImport() {
   excelData = [];
+  currentHomeAddresses = {};
+  excelLookupInProgress = false;
   fileInput.value = '';
   fileInfo.classList.remove('active');
   importPreview.classList.remove('active');
+  excelProgressSection.classList.remove('active');
   importSummary.innerHTML = '';
   importList.innerHTML = '';
 }
@@ -513,6 +659,13 @@ function startLookup() {
 // Listen for progress updates from background
 chrome.runtime.onMessage.addListener((request) => {
   if (request.action === 'lookupProgress') {
+    // Route to Excel lookup handler if Excel lookup is in progress
+    if (excelLookupInProgress) {
+      handleExcelLookupProgress(request);
+      return;
+    }
+
+    // Otherwise, update Case Lookup tab progress
     const pct = Math.round((request.completed / request.total) * 100);
     progressCount.textContent = `${request.completed} / ${request.total}`;
     progressFill.style.width = `${pct}%`;
@@ -678,17 +831,6 @@ function sendToRouteOptimizer() {
   if (pendingStops.length === 0) {
     alert('No stops to send. Import from Excel, look up case numbers, or add addresses first.');
     return;
-  }
-
-  // Check for stops that still need address lookup
-  const needsLookup = pendingStops.filter(s => s.needsLookup);
-  if (needsLookup.length > 0) {
-    const proceed = confirm(
-      `${needsLookup.length} stop(s) still have placeholder addresses (from Excel import). ` +
-      `Use the Case # Lookup tab to resolve them, or continue and enter addresses manually in the Route Optimizer.\n\n` +
-      `Continue anyway?`
-    );
-    if (!proceed) return;
   }
 
   // Build enriched stop data
