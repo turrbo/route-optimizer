@@ -1,30 +1,34 @@
-.open-cases-panel {
-  padding: 16px;
-  border-top: 1px solid #e5e7eb;
+/* Open Cases Bar - sits below header */
+.oc-bar {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  position: relative;
 }
 
-.open-cases-panel .section-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--mr-dark, #292929);
-  margin: 0 0 12px 0;
-}
-
-/* Upload area */
-.oc-upload-area {
+.oc-bar-inner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 12px;
+  padding: 6px 1.5rem;
+  font-size: 13px;
+  flex-wrap: wrap;
 }
 
+.oc-bar-label {
+  font-weight: 700;
+  color: var(--mr-dark, #292929);
+  white-space: nowrap;
+}
+
+/* Upload button */
 .oc-upload-btn {
   display: inline-block;
-  padding: 8px 16px;
+  padding: 4px 12px;
   background: var(--mr-red, #c8102e);
   color: white;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 4px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -35,96 +39,27 @@
   background: #a00d24;
 }
 
-.oc-file-name {
-  font-size: 12px;
-  color: #6b7280;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Geocoding progress */
-.oc-geocoding-bar {
-  font-size: 12px;
-  color: #6b7280;
-  margin-bottom: 12px;
-}
-
-.oc-progress-track {
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 2px;
-  margin-top: 4px;
-  overflow: hidden;
-}
-
-.oc-progress-fill {
-  height: 100%;
-  background: var(--mr-red, #c8102e);
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-/* FR Selector */
-.oc-fr-selector {
-  margin-bottom: 10px;
-}
-
-.oc-fr-selector label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #374151;
-  margin-bottom: 4px;
-}
-
-.oc-fr-selector select {
-  width: 100%;
-  padding: 6px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 13px;
-  background: white;
-}
-
-/* Toggle */
-.oc-toggle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #374151;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
-
-.oc-toggle input {
-  accent-color: var(--mr-red, #c8102e);
-}
-
-/* Summary */
-.oc-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
-  padding: 8px 10px;
-  background: #f9fafb;
-  border-radius: 6px;
-  font-size: 12px;
+.oc-upload-btn-small {
+  background: rgba(0,0,0,0.06);
   color: #4b5563;
+  font-weight: 500;
 }
 
-.oc-stat {
+.oc-upload-btn-small:hover {
+  background: rgba(0,0,0,0.1);
+  color: #1f2937;
+}
+
+/* Counts */
+.oc-bar-counts {
   display: flex;
   align-items: center;
   gap: 4px;
+  color: #374151;
+  white-space: nowrap;
 }
 
-.oc-stat-total {
-  margin-left: auto;
-}
-
+/* Dots */
 .oc-dot {
   width: 10px;
   height: 10px;
@@ -141,11 +76,95 @@
   background: #38bdf8;
 }
 
-/* Case list */
-.oc-case-list {
-  max-height: 300px;
+/* FR selector */
+.oc-bar-fr {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.oc-bar-fr select {
+  padding: 3px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  background: white;
+  max-width: 200px;
+}
+
+.oc-bar-fr-count {
+  background: #e0f2fe;
+  color: #0369a1;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Geocoding indicator */
+.oc-bar-geocoding {
+  color: #6b7280;
+  font-size: 11px;
+  font-style: italic;
+}
+
+/* Toggle */
+.oc-bar-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.oc-bar-toggle input {
+  accent-color: var(--mr-red, #c8102e);
+}
+
+/* List button */
+.oc-bar-list-btn {
+  padding: 3px 10px;
+  background: rgba(0,0,0,0.06);
+  color: #4b5563;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.oc-bar-list-btn:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+/* Clear button */
+.oc-bar-clear {
+  background: none;
+  color: #9ca3af;
+  font-size: 16px;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.oc-bar-clear:hover {
+  color: var(--mr-red, #c8102e);
+}
+
+/* Dropdown list */
+.oc-list-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 400px;
   overflow-y: auto;
-  margin-bottom: 12px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 500;
+  padding: 8px 1.5rem;
 }
 
 .oc-group {
@@ -171,7 +190,7 @@
 }
 
 .oc-case-item {
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-bottom: 1px solid #f3f4f6;
   font-size: 12px;
 }
@@ -194,7 +213,9 @@
   flex-wrap: wrap;
 }
 
-.oc-clear-btn {
-  width: 100%;
+.oc-empty {
+  padding: 12px;
+  text-align: center;
+  color: #9ca3af;
   font-size: 13px;
 }

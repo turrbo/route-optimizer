@@ -3,6 +3,7 @@ import useRouteStore from './store/routeStore';
 import { geocodeAddress } from './utils/geocoding';
 import MapView from './components/MapView';
 import StopPanel from './components/StopPanel';
+import OpenCasesBar from './components/OpenCasesPanel';
 import { WeekView } from './components/WeekView';
 import './App.css';
 
@@ -180,6 +181,8 @@ function App() {
           <button onClick={clearError}>x</button>
         </div>
       )}
+
+      <OpenCasesBar />
 
       <main className="app-main">
         {activeView === 'planner' ? (
