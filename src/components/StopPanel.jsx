@@ -211,6 +211,13 @@ export default function StopPanel() {
       const routeStops = buildRouteStops(stops);
       const optimizedData = await optimizeRoute(routeStops, orsApiKey);
       setRoute(activeDay, 'optimized', optimizedData);
+
+      // Reorder stops in the list to match the optimized sequence
+      if (optimizedData.optimizedOrder) {
+        // Filter out the home-return clone ID (ends with '-return')
+        const realIds = optimizedData.optimizedOrder.filter(id => !id.endsWith('-return'));
+        reorderStops(activeDay, realIds);
+      }
     } catch (error) {
       console.error('Route optimization error:', error);
       setError(error.message || 'Route optimization failed. Check console for details.');
