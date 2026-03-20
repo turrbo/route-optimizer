@@ -330,7 +330,7 @@ export default function StopPanel() {
           </div>
         ) : (
           <ul className="stop-list">
-            {stops.map((stop) => {
+            {stops.map((stop, index) => {
               // Home gets "H", others numbered 1,2,3... excluding home stops
               const nonHomeStops = stops.filter(s => !s.isHomeAddress);
               const nonHomeIdx = nonHomeStops.findIndex(s => s.id === stop.id);
