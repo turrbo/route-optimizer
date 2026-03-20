@@ -2,30 +2,59 @@ const ORS_BASE = 'https://api.openrouteservice.org/v2';
 
 export async function calculateRoute(stops, apiKey) {
   if (stops.length < 2) throw new Error('Need at least 2 stops');
+  if (!apiKey) throw new Error('No API key configured. Go to Settings and add your OpenRouteService API key.');
+
+  // Validate all stops have coordinates
+  const missing = stops.filter(s => !s.lat || !s.lng);
+  if (missing.length > 0) {
+    const names = missing.map(s => s.address || 'Unknown').join(', ');
+    throw new Error(`${missing.length} stop(s) missing coordinates: ${names}. Wait for geocoding to finish or re-add the stop.`);
+  }
 
   const coordinates = stops.map(s => [s.lng, s.lat]);
 
-  const res = await fetch(`${ORS_BASE}/directions/driving-car/geojson`, {
-    method: 'POST',
-    headers: {
-      'Authorization': apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      coordinates,
-      instructions: true,
-      geometry: true,
-    }),
-  });
+  let res;
+  try {
+    res = await fetch(`${ORS_BASE}/directions/driving-car/geojson`, {
+      method: 'POST',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        coordinates,
+        instructions: true,
+        geometry: true,
+      }),
+    });
+  } catch (networkErr) {
+    throw new Error(`Network error connecting to routing service: ${networkErr.message}`);
+  }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Route calculation failed: ${res.status}`);
+    const errBody = await res.text().catch(() => '');
+    let detail = `HTTP ${res.status}`;
+    try {
+      const errJson = JSON.parse(errBody);
+      const msg = errJson.error?.message || errJson.error || errJson.message || '';
+      if (msg) detail = typeof msg === 'string' ? msg : JSON.stringify(msg);
+    } catch { /* not JSON, use raw */ }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`API key invalid or expired (${res.status}). Check Settings and verify your OpenRouteService key.`);
+    }
+    throw new Error(`Route calculation failed: ${detail}`);
   }
 
   const data = await res.json();
+  if (!data.features || !data.features[0]) {
+    throw new Error('Routing service returned empty result. The stops may be unreachable by road.');
+  }
+
   const feature = data.features[0];
-  const summary = feature.properties.summary;
+  const summary = feature.properties?.summary;
+  if (!summary) {
+    throw new Error('Routing service returned incomplete data. Try different stops.');
+  }
 
   return {
     geometry: feature.geometry,
@@ -38,6 +67,13 @@ export async function calculateRoute(stops, apiKey) {
 
 export async function optimizeRoute(stops, apiKey) {
   if (stops.length < 3) throw new Error('Need at least 3 stops to optimize');
+  if (!apiKey) throw new Error('No API key configured. Go to Settings and add your OpenRouteService API key.');
+
+  // Validate all stops have coordinates
+  const missing = stops.filter(s => !s.lat || !s.lng);
+  if (missing.length > 0) {
+    throw new Error(`${missing.length} stop(s) missing coordinates. Wait for geocoding to finish.`);
+  }
 
   const jobs = stops.slice(1, -1).map((stop, idx) => ({
     id: idx + 1,
@@ -54,18 +90,32 @@ export async function optimizeRoute(stops, apiKey) {
     capacity: [100],
   }];
 
-  const res = await fetch(`${ORS_BASE}/optimization`, {
-    method: 'POST',
-    headers: {
-      'Authorization': apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ jobs, vehicles }),
-  });
+  let res;
+  try {
+    res = await fetch(`${ORS_BASE}/optimization`, {
+      method: 'POST',
+      headers: {
+        'Authorization': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ jobs, vehicles }),
+    });
+  } catch (networkErr) {
+    throw new Error(`Network error connecting to optimization service: ${networkErr.message}`);
+  }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `Optimization failed: ${res.status}`);
+    const errBody = await res.text().catch(() => '');
+    let detail = `HTTP ${res.status}`;
+    try {
+      const errJson = JSON.parse(errBody);
+      const msg = errJson.error?.message || errJson.error || errJson.message || '';
+      if (msg) detail = typeof msg === 'string' ? msg : JSON.stringify(msg);
+    } catch { /* not JSON */ }
+    if (res.status === 401 || res.status === 403) {
+      throw new Error(`API key invalid or expired (${res.status}). Check Settings and verify your OpenRouteService key.`);
+    }
+    throw new Error(`Route optimization failed: ${detail}`);
   }
 
   const data = await res.json();

@@ -26,6 +26,7 @@ function App() {
 
   const [apiKeyInput, setApiKeyInput] = useState(orsApiKey);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [geocodingProgress, setGeocodingProgress] = useState(null); // { done, total }
 
   const handleResetAll = () => {
     resetAll();
@@ -44,11 +45,17 @@ function App() {
           caseNumber: stop.caseNumber || '',
           surveyType: stop.surveyType || 'Exterior',
           dayDate: stop.dayDate || activeDay,
+          isHomeAddress: stop.isHomeAddress || false,
+          actualMileage: stop.actualMileage ?? null,
+          estimatedMileage: stop.estimatedMileage ?? null,
+          mileageFlag: stop.mileageFlag || false,
         });
         addedIds.push({ id, address: stop.address });
       }
 
       // Then geocode each one sequentially (Nominatim: 1 req/sec)
+      setGeocodingProgress({ done: 0, total: addedIds.length });
+      let done = 0;
       for (const item of addedIds) {
         try {
           const geo = await geocodeAddress(item.address);
@@ -63,7 +70,10 @@ function App() {
         } catch (err) {
           console.warn(`Could not geocode "${item.address}":`, err.message);
         }
+        done++;
+        setGeocodingProgress({ done, total: addedIds.length });
       }
+      setGeocodingProgress(null);
     }
 
     // New format: ?data=<base64 JSON> with full stop metadata
@@ -150,6 +160,18 @@ function App() {
           </svg>
           Add your OpenRouteService API key to enable routing. Get a free key at openrouteservice.org
           <button onClick={() => setShowSettings(true)}>Add API Key</button>
+        </div>
+      )}
+
+      {geocodingProgress && (
+        <div className="geocoding-banner">
+          Geocoding addresses... {geocodingProgress.done} / {geocodingProgress.total}
+          <div className="geocoding-progress-bar">
+            <div
+              className="geocoding-progress-fill"
+              style={{ width: `${(geocodingProgress.done / geocodingProgress.total) * 100}%` }}
+            />
+          </div>
         </div>
       )}
 

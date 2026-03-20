@@ -53,6 +53,10 @@ const useRouteStore = create(
             surveyType: stop.surveyType || '',
             stopNumber: state.stops.filter(s => s.dayDate === (stop.dayDate || state.activeDay)).length + 1,
             dayDate: stop.dayDate || state.activeDay,
+            isHomeAddress: stop.isHomeAddress || false,
+            actualMileage: stop.actualMileage ?? null,
+            estimatedMileage: stop.estimatedMileage ?? null,
+            mileageFlag: stop.mileageFlag || false,
           }]
         }));
         return id;

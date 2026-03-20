@@ -175,12 +175,6 @@ export default function StopPanel() {
   const handleCalculateRoute = async () => {
     if (stops.length < 2) return;
 
-    const ungeocoded = stops.filter(s => !s.lat || !s.lng);
-    if (ungeocoded.length > 0) {
-      setError(`${ungeocoded.length} stop(s) still geocoding. Please wait a moment and try again.`);
-      return;
-    }
-
     setIsCalculating(true);
     clearError();
 
@@ -189,7 +183,7 @@ export default function StopPanel() {
       setRoute(activeDay, 'original', routeData);
     } catch (error) {
       console.error('Route calculation error:', error);
-      setError(error.message || 'Could not calculate route. Please check your API key and try again.');
+      setError(error.message || 'Route calculation failed. Check console for details.');
     } finally {
       setIsCalculating(false);
     }
@@ -197,12 +191,6 @@ export default function StopPanel() {
 
   const handleOptimizeRoute = async () => {
     if (stops.length < 3) return;
-
-    const ungeocoded = stops.filter(s => !s.lat || !s.lng);
-    if (ungeocoded.length > 0) {
-      setError(`${ungeocoded.length} stop(s) still geocoding. Please wait a moment and try again.`);
-      return;
-    }
 
     setIsOptimizing(true);
     clearError();
@@ -212,7 +200,7 @@ export default function StopPanel() {
       setRoute(activeDay, 'optimized', optimizedData);
     } catch (error) {
       console.error('Route optimization error:', error);
-      setError(error.message || 'Could not optimize route. Please try again.');
+      setError(error.message || 'Route optimization failed. Check console for details.');
     } finally {
       setIsOptimizing(false);
     }
@@ -330,21 +318,32 @@ export default function StopPanel() {
         ) : (
           <ul className="stop-list">
             {stops.map((stop, index) => (
-              <li key={stop.id} className="stop-item">
+              <li key={stop.id} className={`stop-item${!stop.lat || !stop.lng ? ' geocoding' : ''}${stop.isHomeAddress ? ' home-address' : ''}${stop.mileageFlag ? ' mileage-flag' : ''}`}>
                 <div className="stop-header">
-                  <div className="stop-marker">{index + 1}</div>
+                  <div className={`stop-marker${stop.isHomeAddress ? ' home' : ''}`}>
+                    {stop.isHomeAddress ? 'H' : index + 1}
+                  </div>
                   <div className="stop-info">
                     <div className="stop-address" title={stop.address}>
+                      {(!stop.lat || !stop.lng) && <span className="geocoding-dot" title="Geocoding..."></span>}
                       {stop.address.length > 45
                         ? `${stop.address.substring(0, 45)}...`
                         : stop.address}
                     </div>
                     <div className="stop-meta">
+                      {stop.isHomeAddress && (
+                        <span className="meta-badge home-badge">Home</span>
+                      )}
                       {stop.caseNumber && (
                         <span className="meta-badge">Case: {stop.caseNumber}</span>
                       )}
                       {stop.surveyType && (
                         <span className="meta-badge survey-type">{stop.surveyType}</span>
+                      )}
+                      {stop.mileageFlag && (
+                        <span className="meta-badge mileage-over" title={`Actual: ${stop.actualMileage} mi | Est: ${stop.estimatedMileage} mi`}>
+                          Over mileage
+                        </span>
                       )}
                     </div>
                   </div>

@@ -12,8 +12,8 @@
     }
 
     body {
-      width: 400px;
-      min-height: 420px;
+      width: 420px;
+      min-height: 440px;
       max-height: 600px;
       font-family: 'Raleway', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       color: #292929;
@@ -61,8 +61,8 @@
 
     .tab {
       flex: 1;
-      padding: 10px 12px;
-      font-size: 12px;
+      padding: 10px 8px;
+      font-size: 11px;
       font-weight: 600;
       text-align: center;
       cursor: pointer;
@@ -70,7 +70,7 @@
       background: transparent;
       color: #666;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.3px;
       transition: all 0.2s;
       border-bottom: 2px solid transparent;
     }
@@ -96,6 +96,195 @@
 
     .tab-content.active {
       display: block;
+    }
+
+    /* --- Excel Import Tab --- */
+    .upload-zone {
+      border: 2px dashed #ddd;
+      border-radius: 6px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+      background: #fafafa;
+    }
+
+    .upload-zone:hover {
+      border-color: #c8102e;
+      background: #fff5f5;
+    }
+
+    .upload-zone.dragging {
+      border-color: #c8102e;
+      background: #fff5f5;
+    }
+
+    .upload-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .upload-text {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .upload-text strong {
+      color: #c8102e;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .file-info {
+      display: none;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .file-info.active {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #166534;
+    }
+
+    .file-remove {
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    /* Import Preview */
+    .import-preview {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .import-preview.active {
+      display: block;
+    }
+
+    .import-summary {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .summary-card {
+      flex: 1;
+      min-width: 80px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .summary-card .num {
+      font-size: 18px;
+      font-weight: 700;
+      color: #292929;
+    }
+
+    .summary-card .label {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .summary-card.flagged {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+    }
+
+    .summary-card.flagged .num {
+      color: #ea580c;
+    }
+
+    .import-day-group {
+      margin-bottom: 10px;
+    }
+
+    .import-day-header {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #c8102e;
+      padding: 6px 0 4px 0;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .import-day-header .home-label {
+      font-weight: 400;
+      font-size: 10px;
+      color: #2563eb;
+    }
+
+    .import-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 8px;
+      font-size: 11px;
+      border-radius: 3px;
+      margin-bottom: 3px;
+      border: 1px solid #e8e8e8;
+    }
+
+    .import-item.flagged {
+      border-color: #fed7aa;
+      background: #fff7ed;
+    }
+
+    .import-item .case-num {
+      font-weight: 700;
+      color: #292929;
+      min-width: 68px;
+    }
+
+    .import-item .survey-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .import-item .mileage-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .import-item .mileage-ok {
+      background: #dcfce7;
+      color: #166534;
     }
 
     /* Case Lookup Tab */
@@ -388,6 +577,15 @@
       border-color: #c8102e;
     }
 
+    .stop-item.home-stop {
+      background: #eff6ff;
+      border-color: #93c5fd;
+    }
+
+    .stop-item.flagged-stop {
+      border-left: 3px solid #ea580c;
+    }
+
     .stop-number {
       min-width: 22px;
       height: 22px;
@@ -400,6 +598,10 @@
       font-size: 11px;
       font-weight: 600;
       flex-shrink: 0;
+    }
+
+    .stop-number.home {
+      background: #2563eb;
     }
 
     .stop-content {
@@ -570,12 +772,40 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab active" data-tab="lookup">Case # Lookup</button>
+    <button class="tab active" data-tab="excel">Excel Import</button>
+    <button class="tab" data-tab="lookup">Case # Lookup</button>
     <button class="tab" data-tab="stops">Stops</button>
   </div>
 
+  <!-- Excel Import Tab -->
+  <div id="tab-excel" class="tab-content active">
+    <div id="uploadZone" class="upload-zone">
+      <span class="upload-icon">&#128196;</span>
+      <div class="upload-text">
+        <strong>Drop Excel file here</strong><br>
+        or click to browse<br>
+        <small>FR Case Mileage .xlsx files</small>
+      </div>
+      <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls,.csv">
+    </div>
+
+    <div id="fileInfo" class="file-info">
+      <span id="fileName" class="file-name"></span>
+      <button id="fileRemove" class="file-remove">&#215;</button>
+    </div>
+
+    <div id="importPreview" class="import-preview">
+      <div id="importSummary" class="import-summary"></div>
+      <div id="importList"></div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button id="importAddBtn" class="btn btn-primary" style="flex: 2;">Add All to Stops</button>
+        <button id="importClearBtn" class="btn btn-outline" style="flex: 1;">Clear</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Case # Lookup Tab -->
-  <div id="tab-lookup" class="tab-content active">
+  <div id="tab-lookup" class="tab-content">
     <div class="login-notice">
       <strong>Reminder:</strong> You must be logged into mueller-inc.com for case lookup to work.
     </div>
@@ -652,6 +882,7 @@
     </div>
   </div>
 
+  <script src="xlsx.min.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>
