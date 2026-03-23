@@ -4,6 +4,7 @@ import { geocodeAddress } from './utils/geocoding';
 import MapView from './components/MapView';
 import StopPanel from './components/StopPanel';
 import OpenCasesBar from './components/OpenCasesPanel';
+import RouteControlsBar from './components/RouteControlsBar';
 import { WeekView } from './components/WeekView';
 import './App.css';
 
@@ -187,6 +188,7 @@ function App() {
       )}
 
       <OpenCasesBar />
+      {activeView === 'planner' && <RouteControlsBar />}
 
       <main className="app-main">
         {activeView === 'planner' ? (

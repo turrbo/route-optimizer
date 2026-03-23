@@ -1,0 +1,118 @@
+/* Route Controls Bar - sits alongside Open Cases bar */
+.rc-bar {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.rc-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 1.5rem;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+/* Buttons group */
+.rc-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rc-btn {
+  padding: 5px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.rc-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rc-btn-calc {
+  background: var(--mr-red, #c8102e);
+  color: white;
+}
+
+.rc-btn-calc:hover:not(:disabled) {
+  background: #a00d25;
+}
+
+.rc-btn-opt {
+  background: #16a34a;
+  color: white;
+}
+
+.rc-btn-opt:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.rc-btn-compare {
+  background: rgba(0,0,0,0.06);
+  color: #4b5563;
+}
+
+.rc-btn-compare:hover:not(:disabled) {
+  background: rgba(0,0,0,0.1);
+}
+
+.rc-btn-compare.active {
+  background: var(--mr-dark, #292929);
+  color: white;
+}
+
+/* Stats */
+.rc-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rc-stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.rc-stat-label {
+  font-weight: 700;
+  color: var(--mr-gray-600, #6b7280);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.rc-stat-value {
+  font-weight: 600;
+  color: var(--mr-dark, #292929);
+}
+
+.rc-stat-sep {
+  color: var(--mr-gray-400, #9ca3af);
+}
+
+.rc-stat-opt .rc-stat-label {
+  color: #16a34a;
+}
+
+.rc-stat-opt .rc-stat-value {
+  color: #15803d;
+}
+
+.rc-savings {
+  font-size: 11px;
+  font-weight: 600;
+  color: #16a34a;
+  margin-left: 4px;
+  padding: 1px 8px;
+  background: rgba(22, 163, 74, 0.08);
+  border-radius: 10px;
+}
