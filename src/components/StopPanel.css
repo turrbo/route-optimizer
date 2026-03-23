@@ -349,8 +349,10 @@
 
 /* Route Actions */
 .route-actions-section {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  overflow-y: auto;
   border-bottom: none;
+  min-height: 80px;
 }
 
 .action-buttons {
@@ -424,6 +426,23 @@
 }
 
 .stop-list-section::-webkit-scrollbar-thumb:hover {
+  background: var(--mr-gray-500);
+}
+
+.route-actions-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.route-actions-section::-webkit-scrollbar-track {
+  background: var(--mr-gray-100);
+}
+
+.route-actions-section::-webkit-scrollbar-thumb {
+  background: var(--mr-gray-400);
+  border-radius: 3px;
+}
+
+.route-actions-section::-webkit-scrollbar-thumb:hover {
   background: var(--mr-gray-500);
 }
 

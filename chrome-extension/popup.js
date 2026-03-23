@@ -138,7 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadData() {
-  chrome.storage.local.get(['pendingStops', 'appUrl', 'savedExcelData', 'savedHomeAddresses', 'savedFileName'], (result) => {
+  chrome.storage.local.get([
+    'pendingStops', 'appUrl',
+    'savedExcelData', 'savedHomeAddresses', 'savedFileName',
+    'lookupActive', 'lookupResults', 'lookupTotal', 'lookupCompleted', 'lookupPhase'
+  ], (result) => {
     pendingStops = result.pendingStops || [];
     appUrl = result.appUrl || 'https://turrbo.github.io/route-optimizer/';
     appUrlInput.value = appUrl;
@@ -153,7 +157,42 @@ function loadData() {
         fileName.textContent = result.savedFileName;
         fileInfo.classList.add('active');
       }
+
+      // Merge any lookup results the background found while popup was closed
+      const bgResults = result.lookupResults || [];
+      if (bgResults.length > 0) {
+        bgResults.forEach(lr => {
+          const match = excelData.find(d => d.controlNum === lr.caseNumber);
+          if (match) {
+            if (lr.success) {
+              match.resolvedAddress = lr.address;
+              match.lookupError = null;
+            } else if (!match.resolvedAddress) {
+              match.lookupError = lr.error || 'Not found';
+            }
+          }
+        });
+      }
+
+      // Check if lookup is still running in the background
+      if (result.lookupActive) {
+        excelLookupInProgress = true;
+        excelProgressSection.classList.add('active');
+        const phase = result.lookupPhase || 'first';
+        excelProgressText.textContent = phase === 'retry'
+          ? 'Retrying failed cases...'
+          : 'Looking up addresses on Mueller Inc...';
+        excelProgressCount.textContent = `${result.lookupCompleted || 0} / ${result.lookupTotal || '?'}`;
+        const pct = result.lookupTotal ? Math.round(((result.lookupCompleted || 0) / result.lookupTotal) * 100) : 0;
+        excelProgressFill.style.width = `${pct}%`;
+        excelProgressStatus.textContent = 'Lookup still running...';
+        importAddBtn.disabled = true;
+        importAddBtn.textContent = 'Looking up addresses...';
+        importClearBtn.disabled = true;
+      }
+
       renderExcelPreview(currentHomeAddresses);
+
       // Switch to import tab to show restored state
       tabBtns.forEach(t => t.classList.remove('active'));
       tabContents.forEach(tc => tc.classList.remove('active'));
@@ -511,6 +550,9 @@ function startExcelLookup(homeAddresses) {
     return;
   }
 
+  // Save state immediately so popup can restore if closed
+  saveExcelState();
+
   excelLookupInProgress = true;
   excelProgressSection.classList.add('active');
   excelProgressText.textContent = 'Looking up addresses on Mueller Inc...';
@@ -611,7 +653,10 @@ function saveExcelState() {
 }
 
 function clearSavedExcelState() {
-  chrome.storage.local.remove(['savedExcelData', 'savedHomeAddresses', 'savedFileName']);
+  chrome.storage.local.remove([
+    'savedExcelData', 'savedHomeAddresses', 'savedFileName',
+    'lookupActive', 'lookupResults', 'lookupTotal', 'lookupCompleted', 'lookupPhase'
+  ]);
 }
 
 function addExcelToStops() {
@@ -742,6 +787,52 @@ function startLookup() {
     }
   );
 }
+
+// Listen for storage changes from background (results arriving while popup is restored)
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace !== 'local') return;
+
+  // When background lookup saves new results, merge them into excelData
+  if (changes.lookupResults && excelLookupInProgress && excelData.length > 0) {
+    const bgResults = changes.lookupResults.newValue || [];
+    bgResults.forEach(lr => {
+      const match = excelData.find(d => d.controlNum === lr.caseNumber);
+      if (match) {
+        if (lr.success) {
+          match.resolvedAddress = lr.address;
+          match.lookupError = null;
+        } else if (!match.resolvedAddress) {
+          match.lookupError = lr.error || 'Not found';
+        }
+      }
+    });
+    renderExcelPreview(currentHomeAddresses);
+  }
+
+  // When background lookup completes, update UI
+  if (changes.lookupActive && changes.lookupActive.newValue === false && excelLookupInProgress) {
+    excelLookupInProgress = false;
+    excelProgressSection.classList.remove('active');
+    importClearBtn.disabled = false;
+    saveExcelState();
+    renderExcelPreview(currentHomeAddresses);
+  }
+
+  // Update progress bar from storage changes
+  if (changes.lookupCompleted && excelLookupInProgress) {
+    const completed = changes.lookupCompleted.newValue || 0;
+    chrome.storage.local.get(['lookupTotal', 'lookupPhase'], (data) => {
+      const total = data.lookupTotal || completed;
+      const phase = data.lookupPhase || 'first';
+      const pct = Math.round((completed / total) * 100);
+      excelProgressCount.textContent = `${completed} / ${total}`;
+      excelProgressFill.style.width = `${pct}%`;
+      if (phase === 'retry') {
+        excelProgressText.textContent = 'Retrying failed cases...';
+      }
+    });
+  }
+});
 
 // Listen for progress updates from background
 chrome.runtime.onMessage.addListener((request) => {

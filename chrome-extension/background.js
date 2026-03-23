@@ -135,13 +135,31 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'lookupCases') {
     const caseNumbers = request.caseNumbers || [];
     const skipRetry = request.skipRetry || false;
+
+    // Mark lookup as active so popup knows when reopening
+    chrome.storage.local.set({
+      lookupActive: true,
+      lookupResults: [],
+      lookupTotal: caseNumbers.length,
+      lookupCompleted: 0,
+      lookupPhase: 'first'
+    });
+
     // Process case numbers sequentially to avoid overwhelming the server
     (async () => {
       const results = [];
       for (const caseNum of caseNumbers) {
         const result = await lookupCaseNumber(caseNum);
         results.push(result);
-        // Notify popup of progress
+
+        // Save incrementally to storage (popup may be closed)
+        chrome.storage.local.set({
+          lookupResults: results,
+          lookupCompleted: results.length,
+          lookupPhase: 'first'
+        });
+
+        // Notify popup of progress (if open)
         chrome.runtime.sendMessage({
           action: 'lookupProgress',
           completed: results.length,
@@ -155,6 +173,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (!skipRetry) {
         const failedCases = results.filter(r => !r.success);
         if (failedCases.length > 0) {
+          chrome.storage.local.set({ lookupPhase: 'retry' });
           chrome.runtime.sendMessage({
             action: 'lookupRetryStarting',
             count: failedCases.length
@@ -169,6 +188,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
               const idx = results.findIndex(r => r.caseNumber === failed.caseNumber);
               if (idx >= 0) results[idx] = retry;
             }
+
+            // Save incrementally
+            chrome.storage.local.set({ lookupResults: results });
+
             chrome.runtime.sendMessage({
               action: 'lookupProgress',
               completed: retryDone,
@@ -180,12 +203,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
       }
 
-      // Save results to storage so popup can recover them
-      chrome.storage.local.set({ lookupResults: results });
+      // Mark lookup as done and save final results
+      chrome.storage.local.set({
+        lookupActive: false,
+        lookupResults: results
+      });
 
       sendResponse({ results });
     })();
     return true; // Keep message channel open for async response
+  }
+
+  if (request.action === 'checkLookupStatus') {
+    chrome.storage.local.get(['lookupActive', 'lookupResults', 'lookupTotal', 'lookupCompleted', 'lookupPhase'], (data) => {
+      sendResponse(data);
+    });
+    return true;
   }
 
   return true;
