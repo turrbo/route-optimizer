@@ -388,6 +388,94 @@
   line-height: 1.5;
 }
 
+/* Missed Opportunities Panel */
+.missed-opportunities-panel {
+  background: var(--mr-white);
+  border-radius: var(--mr-radius);
+  box-shadow: var(--mr-shadow);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.missed-opportunities-panel .warnings-title svg {
+  color: #2563eb;
+}
+
+.opportunities-subtitle {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--mr-gray-500);
+  margin-left: 0.25rem;
+}
+
+.opportunities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.opportunity-day {
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  border-left: 4px solid #2563eb;
+  border-radius: var(--mr-radius);
+  overflow: hidden;
+}
+
+.opportunity-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.opportunity-day-name {
+  font-weight: 700;
+  color: var(--mr-dark);
+  font-size: 0.875rem;
+}
+
+.opportunity-count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.opportunity-cases {
+  padding: 0.5rem 1rem;
+}
+
+.opportunity-case {
+  padding: 0.375rem 0;
+  border-bottom: 1px solid var(--mr-gray-200);
+}
+
+.opportunity-case:last-child {
+  border-bottom: none;
+}
+
+.opportunity-case-addr {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--mr-dark);
+}
+
+.opportunity-case-meta {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--mr-gray-500);
+  margin-top: 1px;
+}
+
+.opp-unassigned {
+  color: #16a34a;
+  font-weight: 600;
+}
+
 /* Week Summary Section */
 .week-summary {
   background: var(--mr-white);

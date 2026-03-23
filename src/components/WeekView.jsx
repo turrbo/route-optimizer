@@ -1,7 +1,10 @@
 import React, { useMemo, useRef, useCallback, useState } from 'react';
 import useRouteStore from '../store/routeStore';
-import { detectDuplicateAreas, formatDistance, formatDuration } from '../utils/routing';
+import { detectDuplicateAreas, formatDistance, formatDuration, haversine } from '../utils/routing';
+import { filterOpenCases } from '../utils/excelParser';
 import './WeekView.css';
+
+const NEARBY_RADIUS_METERS = 32187; // 20 miles
 
 /**
  * Parse YYYY-MM-DD string as local date (not UTC)
@@ -80,7 +83,9 @@ export const WeekView = () => {
     setActiveView,
     weekStartDate,
     setWeekStartDate,
-    routes
+    routes,
+    openCases,
+    selectedFR
   } = useRouteStore();
 
   const weekViewRef = useRef(null);
@@ -148,6 +153,49 @@ export const WeekView = () => {
       duplicateCount: duplicateWarnings.length
     };
   }, [weekDays, stopsByDay, routes, duplicateWarnings]);
+
+  // Find missed opportunities: open cases near the route that could have been added
+  const missedOpportunities = useMemo(() => {
+    if (openCases.length === 0) return [];
+
+    const opportunities = [];
+
+    weekDays.forEach(day => {
+      const dayStops = stopsByDay[day.date].filter(s => !s.isHomeAddress && s.lat && s.lng);
+      if (dayStops.length === 0) return;
+
+      // Get open cases available on this date
+      const availableCases = filterOpenCases(openCases, day.date)
+        .filter(c => c.lat && c.lng);
+
+      // Get unassigned exterior cases near any stop
+      const nearbyCases = availableCases.filter(c => {
+        // Skip cases that are already in the route as stops
+        const alreadyInRoute = stops.some(s => s.caseNumber === c.controlNumber);
+        if (alreadyInRoute) return false;
+
+        // Must be unassigned OR assigned to the selected FR
+        if (c.frAssigned && c.frAssigned !== selectedFR) return false;
+
+        // Check if within radius of any stop
+        return dayStops.some(stop =>
+          haversine(stop.lat, stop.lng, c.lat, c.lng) <= NEARBY_RADIUS_METERS
+        );
+      });
+
+      if (nearbyCases.length > 0) {
+        opportunities.push({
+          date: day.date,
+          dayName: day.dayName,
+          dayNum: day.dayNum,
+          monthName: day.monthName,
+          cases: nearbyCases,
+        });
+      }
+    });
+
+    return opportunities;
+  }, [openCases, selectedFR, weekDays, stopsByDay, stops]);
 
   // Handle day card click
   const handleDayClick = (dayDate) => {
@@ -408,6 +456,52 @@ export const WeekView = () => {
           </div>
         )}
       </div>
+
+      {/* Missed Opportunities Panel */}
+      {openCases.length > 0 && (
+        <div className="missed-opportunities-panel">
+          <h3 className="warnings-title">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+            </svg>
+            Missed Exterior Opportunities
+            <span className="opportunities-subtitle">(within 20 miles of route)</span>
+          </h3>
+
+          {missedOpportunities.length === 0 ? (
+            <div className="no-warnings-message">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              No nearby open exterior cases found this week
+            </div>
+          ) : (
+            <div className="opportunities-list">
+              {missedOpportunities.map((opp) => (
+                <div key={opp.date} className="opportunity-day">
+                  <div className="opportunity-day-header">
+                    <span className="opportunity-day-name">{opp.dayName} {opp.monthName} {opp.dayNum}</span>
+                    <span className="opportunity-count">{opp.cases.length} case{opp.cases.length > 1 ? 's' : ''} nearby</span>
+                  </div>
+                  <div className="opportunity-cases">
+                    {opp.cases.map((c) => (
+                      <div key={c.controlNumber} className="opportunity-case">
+                        <div className="opportunity-case-info">
+                          <span className="opportunity-case-addr">{c.address}, {c.city}</span>
+                          <span className="opportunity-case-meta">
+                            #{c.controlNumber} - {c.surveyType}
+                            {!c.frAssigned && <span className="opp-unassigned"> (Unassigned)</span>}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Week Summary Stats */}
       <div className="week-summary">

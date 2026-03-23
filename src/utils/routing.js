@@ -81,7 +81,7 @@ export async function optimizeRoute(stops, apiKey) {
 }
 
 // Haversine distance in meters between two lat/lng points
-function haversine(lat1, lng1, lat2, lng2) {
+export function haversine(lat1, lng1, lat2, lng2) {
   const R = 6371000;
   const toRad = d => d * Math.PI / 180;
   const dLat = toRad(lat2 - lat1);
@@ -169,9 +169,10 @@ export function formatDuration(seconds) {
 }
 
 export function detectDuplicateAreas(allStops) {
-  // Group stops by dayDate, then by ZIP or city
+  // Group non-home stops by dayDate, then by ZIP or city
   const dayGroups = {};
   for (const stop of allStops) {
+    if (stop.isHomeAddress) continue; // Skip home addresses
     if (!dayGroups[stop.dayDate]) dayGroups[stop.dayDate] = [];
     dayGroups[stop.dayDate].push(stop);
   }

@@ -138,12 +138,28 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function loadData() {
-  chrome.storage.local.get(['pendingStops', 'appUrl'], (result) => {
+  chrome.storage.local.get(['pendingStops', 'appUrl', 'savedExcelData', 'savedHomeAddresses', 'savedFileName'], (result) => {
     pendingStops = result.pendingStops || [];
     appUrl = result.appUrl || 'https://turrbo.github.io/route-optimizer/';
     appUrlInput.value = appUrl;
     renderStops();
     updateBadge();
+
+    // Restore Excel import state if saved (popup was closed during/after lookup)
+    if (result.savedExcelData && result.savedExcelData.length > 0) {
+      excelData = result.savedExcelData;
+      currentHomeAddresses = result.savedHomeAddresses || {};
+      if (result.savedFileName) {
+        fileName.textContent = result.savedFileName;
+        fileInfo.classList.add('active');
+      }
+      renderExcelPreview(currentHomeAddresses);
+      // Switch to import tab to show restored state
+      tabBtns.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      document.querySelector('[data-tab="import"]').classList.add('active');
+      document.getElementById('tab-import').classList.add('active');
+    }
   });
 }
 
@@ -325,7 +341,8 @@ function renderExcelPreview(homeAddresses) {
   const totalCases = excelData.length;
   const days = [...new Set(excelData.map(d => d.dayDate).filter(Boolean))].sort();
   const flaggedCount = excelData.filter(d => d.mileageFlag).length;
-  const foundCount = excelData.filter(d => d.resolvedAddress).length;
+  const foundCount = excelData.filter(d => d.resolvedAddress && !d.manualAddress).length;
+  const manualCount = excelData.filter(d => d.manualAddress).length;
 
   importSummary.innerHTML = `
     <div class="summary-card">
@@ -337,7 +354,7 @@ function renderExcelPreview(homeAddresses) {
       <div class="label">Days</div>
     </div>
     <div class="summary-card">
-      <div class="num">${foundCount}/${totalCases}</div>
+      <div class="num">${foundCount + manualCount}/${totalCases}</div>
       <div class="label">Addresses</div>
     </div>
     <div class="summary-card flagged">
@@ -376,6 +393,18 @@ function renderExcelPreview(homeAddresses) {
           ? item.resolvedAddress.substring(0, 60) + '...'
           : item.resolvedAddress;
         addressLine = `<span class="address-found">${escapeHtml(short)}</span>`;
+      } else if (item.manualAddress) {
+        const short = item.manualAddress.length > 60
+          ? item.manualAddress.substring(0, 60) + '...'
+          : item.manualAddress;
+        addressLine = `<span class="address-found address-manual">${escapeHtml(short)} (manual)</span>`;
+      } else if (item.lookupError && !excelLookupInProgress) {
+        addressLine = `
+          <div class="manual-address-row">
+            <span class="address-error">${escapeHtml(item.lookupError)}</span>
+            <input type="text" class="manual-address-input" data-control="${escapeHtml(item.controlNum)}" placeholder="Enter address manually..." />
+            <button class="manual-address-save" data-control="${escapeHtml(item.controlNum)}">Save</button>
+          </div>`;
       } else if (item.lookupError) {
         addressLine = `<span class="address-error">${escapeHtml(item.lookupError)}</span>`;
       } else if (excelLookupInProgress) {
@@ -432,14 +461,43 @@ function renderExcelPreview(homeAddresses) {
 
   // Only enable Add button when lookup is done and we have at least some addresses
   const allDone = !excelLookupInProgress;
-  importAddBtn.disabled = !allDone || foundCount === 0;
+  const totalFound = foundCount + manualCount;
+  importAddBtn.disabled = !allDone || totalFound === 0;
   if (excelLookupInProgress) {
     importAddBtn.textContent = 'Looking up addresses...';
-  } else if (foundCount === 0) {
+  } else if (totalFound === 0) {
     importAddBtn.textContent = 'No addresses found';
   } else {
-    importAddBtn.textContent = `Add ${foundCount} Addresses to Stops`;
+    importAddBtn.textContent = `Add ${totalFound} Addresses to Stops`;
   }
+
+  // Wire up manual address save buttons
+  document.querySelectorAll('.manual-address-save').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const controlNum = btn.dataset.control;
+      const input = document.querySelector(`.manual-address-input[data-control="${controlNum}"]`);
+      if (input && input.value.trim()) {
+        const match = excelData.find(d => d.controlNum === controlNum);
+        if (match) {
+          match.manualAddress = input.value.trim();
+          match.resolvedAddress = input.value.trim();
+          match.lookupError = null;
+          saveExcelState();
+          renderExcelPreview(currentHomeAddresses);
+        }
+      }
+    });
+  });
+
+  // Allow Enter key to save manual address
+  document.querySelectorAll('.manual-address-input').forEach(input => {
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        const btn = document.querySelector(`.manual-address-save[data-control="${input.dataset.control}"]`);
+        if (btn) btn.click();
+      }
+    });
+  });
 }
 
 // --- Auto address lookup after Excel parse ---
@@ -497,6 +555,8 @@ function startExcelLookup(homeAddresses) {
         });
       }
 
+      // Save state so popup can recover if closed
+      saveExcelState();
       renderExcelPreview(homeAddresses);
     }
   );
@@ -504,10 +564,22 @@ function startExcelLookup(homeAddresses) {
 
 // Listen for Excel lookup progress
 function handleExcelLookupProgress(request) {
+  if (request.action === 'lookupRetryStarting' && excelLookupInProgress) {
+    excelProgressText.textContent = 'Retrying failed cases...';
+    excelProgressCount.textContent = `0 / ${request.count}`;
+    excelProgressFill.style.width = '0%';
+    excelProgressStatus.textContent = 'Second attempt for timed-out cases';
+    return;
+  }
+
   if (request.action === 'lookupProgress' && excelLookupInProgress) {
+    const phase = request.phase || 'first';
     const pct = Math.round((request.completed / request.total) * 100);
     excelProgressCount.textContent = `${request.completed} / ${request.total}`;
     excelProgressFill.style.width = `${pct}%`;
+    if (phase === 'retry') {
+      excelProgressText.textContent = 'Retrying failed cases...';
+    }
 
     // Update the individual item as results come in
     if (request.latest) {
@@ -522,10 +594,24 @@ function handleExcelLookupProgress(request) {
           excelProgressStatus.textContent = `Case ${request.latest.caseNumber}: ${request.latest.error || 'Not found'}`;
         }
       }
+      // Save state so popup can recover if closed
+      saveExcelState();
       // Re-render preview to show updated addresses
       renderExcelPreview(currentHomeAddresses);
     }
   }
+}
+
+function saveExcelState() {
+  chrome.storage.local.set({
+    savedExcelData: excelData,
+    savedHomeAddresses: currentHomeAddresses,
+    savedFileName: fileName.textContent || '',
+  });
+}
+
+function clearSavedExcelState() {
+  chrome.storage.local.remove(['savedExcelData', 'savedHomeAddresses', 'savedFileName']);
 }
 
 function addExcelToStops() {
@@ -608,6 +694,7 @@ function clearExcelImport() {
   excelProgressSection.classList.remove('active');
   importSummary.innerHTML = '';
   importList.innerHTML = '';
+  clearSavedExcelState();
 }
 
 // ===================== CASE # LOOKUP =====================
@@ -658,7 +745,7 @@ function startLookup() {
 
 // Listen for progress updates from background
 chrome.runtime.onMessage.addListener((request) => {
-  if (request.action === 'lookupProgress') {
+  if (request.action === 'lookupProgress' || request.action === 'lookupRetryStarting') {
     // Route to Excel lookup handler if Excel lookup is in progress
     if (excelLookupInProgress) {
       handleExcelLookupProgress(request);

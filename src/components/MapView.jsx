@@ -113,10 +113,12 @@ const convertGeometryToLatLngs = (geometry) => {
 const MapView = () => {
   const activeDay = useRouteStore((state) => state.activeDay);
   const getStopsForDay = useRouteStore((state) => state.getStopsForDay);
+  const addStop = useRouteStore((state) => state.addStop);
   const routes = useRouteStore((state) => state.routes);
   const openCases = useRouteStore((state) => state.openCases);
   const selectedFR = useRouteStore((state) => state.selectedFR);
   const showOpenCases = useRouteStore((state) => state.showOpenCases);
+  const allStops = useRouteStore((state) => state.stops);
 
   // Get stops for the active day
   const stops = useMemo(() => {
@@ -156,6 +158,27 @@ const MapView = () => {
     // Will be overridden by fitBounds, but set reasonable default
     return { center: [validStops[0].lat, validStops[0].lng], zoom: 13 };
   }, [stops]);
+
+  // Check if a case is already added as a stop
+  const isCaseInRoute = (controlNumber) => {
+    return allStops.some(s => s.caseNumber === controlNumber);
+  };
+
+  const handleAddCaseToRoute = (caseItem) => {
+    if (isCaseInRoute(caseItem.controlNumber)) return;
+    addStop({
+      address: `${caseItem.address}, ${caseItem.city}, ${caseItem.state}`,
+      lat: caseItem.lat,
+      lng: caseItem.lng,
+      city: caseItem.city,
+      state: caseItem.state,
+      zip: '',
+      caseNumber: caseItem.controlNumber,
+      surveyType: caseItem.surveyType,
+      dayDate: activeDay,
+      isHomeAddress: false,
+    });
+  };
 
   const hasOptimized = routeData.optimized.length > 0;
   const hasOriginal = routeData.original.length > 0;
@@ -244,6 +267,13 @@ const MapView = () => {
                 <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
                 <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
                 <div className="popup-field" style={{ color: '#16a34a', fontWeight: 600 }}>Unassigned</div>
+                {!isCaseInRoute(c.controlNumber) ? (
+                  <button className="popup-add-btn" onClick={() => handleAddCaseToRoute(c)}>
+                    Add to Route
+                  </button>
+                ) : (
+                  <div className="popup-field" style={{ color: '#6b7280', fontStyle: 'italic' }}>Already in route</div>
+                )}
               </div>
             </Popup>
           </Marker>
@@ -263,6 +293,13 @@ const MapView = () => {
                 <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
                 <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
                 <div className="popup-field" style={{ color: '#38bdf8', fontWeight: 600 }}>FR: {c.frAssigned}</div>
+                {!isCaseInRoute(c.controlNumber) ? (
+                  <button className="popup-add-btn" onClick={() => handleAddCaseToRoute(c)}>
+                    Add to Route
+                  </button>
+                ) : (
+                  <div className="popup-field" style={{ color: '#6b7280', fontStyle: 'italic' }}>Already in route</div>
+                )}
               </div>
             </Popup>
           </Marker>

@@ -69,6 +69,25 @@
   margin-right: 4px;
 }
 
+.popup-add-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: #c8102e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.popup-add-btn:hover {
+  background: #a10d24;
+}
+
 /* Override Leaflet default styles */
 .leaflet-popup-content-wrapper {
   border-radius: 8px;

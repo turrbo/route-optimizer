@@ -134,6 +134,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.action === 'lookupCases') {
     const caseNumbers = request.caseNumbers || [];
+    const skipRetry = request.skipRetry || false;
     // Process case numbers sequentially to avoid overwhelming the server
     (async () => {
       const results = [];
@@ -145,9 +146,43 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           action: 'lookupProgress',
           completed: results.length,
           total: caseNumbers.length,
-          latest: result
+          latest: result,
+          phase: 'first'
         }).catch(() => {}); // Popup might be closed
       }
+
+      // Retry failed cases once more (unless told to skip)
+      if (!skipRetry) {
+        const failedCases = results.filter(r => !r.success);
+        if (failedCases.length > 0) {
+          chrome.runtime.sendMessage({
+            action: 'lookupRetryStarting',
+            count: failedCases.length
+          }).catch(() => {});
+
+          let retryDone = 0;
+          for (const failed of failedCases) {
+            const retry = await lookupCaseNumber(failed.caseNumber);
+            retryDone++;
+            // If retry succeeded, update the result
+            if (retry.success) {
+              const idx = results.findIndex(r => r.caseNumber === failed.caseNumber);
+              if (idx >= 0) results[idx] = retry;
+            }
+            chrome.runtime.sendMessage({
+              action: 'lookupProgress',
+              completed: retryDone,
+              total: failedCases.length,
+              latest: retry,
+              phase: 'retry'
+            }).catch(() => {});
+          }
+        }
+      }
+
+      // Save results to storage so popup can recover them
+      chrome.storage.local.set({ lookupResults: results });
+
       sendResponse({ results });
     })();
     return true; // Keep message channel open for async response
