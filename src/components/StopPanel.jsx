@@ -327,7 +327,79 @@ export default function StopPanel() {
         </button>
       </div>
 
-      {/* Stop List */}
+      {/* Route Stats + Actions - pinned below Add Stop form */}
+      <div className="stop-panel-section route-actions-section">
+        {/* Route Stats */}
+        {(dayRoutes.original || dayRoutes.optimized) && (
+          <div className="route-stats">
+            {dayRoutes.original && (
+              <div className="route-stat">
+                <div className="stat-label">Original Route</div>
+                <div className="stat-values">
+                  <span className="stat-value">{formatDistance(dayRoutes.original.distance)}</span>
+                  <span className="stat-separator">•</span>
+                  <span className="stat-value">{formatDuration(dayRoutes.original.duration)}</span>
+                </div>
+              </div>
+            )}
+
+            {dayRoutes.optimized && (
+              <div className="route-stat optimized">
+                <div className="stat-label">Optimized Route</div>
+                <div className="stat-values">
+                  <span className="stat-value">{formatDistance(dayRoutes.optimized.distance)}</span>
+                  <span className="stat-separator">•</span>
+                  <span className="stat-value">{formatDuration(dayRoutes.optimized.duration)}</span>
+                </div>
+                {dayRoutes.original && (
+                  <div className="stat-savings">
+                    Saves {formatDistance(dayRoutes.original.distance - dayRoutes.optimized.distance)}
+                    {' and '}
+                    {formatDuration(dayRoutes.original.duration - dayRoutes.optimized.duration)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="action-buttons">
+          <button
+            className="btn btn-primary"
+            onClick={handleCalculateRoute}
+            disabled={!canCalculateRoute}
+          >
+            {isCalculating ? 'Calculating...' : 'Calculate Route'}
+          </button>
+
+          <button
+            className="btn btn-optimize"
+            onClick={handleOptimizeRoute}
+            disabled={!canOptimizeRoute}
+          >
+            {isOptimizing ? 'Optimizing...' : 'Optimize Route'}
+          </button>
+
+          {canCompareRoutes && (
+            <button
+              className={`btn btn-toggle ${showComparison ? 'active' : ''}`}
+              onClick={handleToggleComparison}
+            >
+              {showComparison ? 'Hide Comparison' : 'Compare Routes'}
+            </button>
+          )}
+
+          <button
+            className="btn btn-secondary"
+            onClick={handleClearAll}
+            disabled={stops.length === 0}
+          >
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      {/* Stop List - scrollable at bottom */}
       <div className="stop-panel-section stop-list-section">
         <h2 className="section-title">Stops ({stops.length})</h2>
 
@@ -437,80 +509,6 @@ export default function StopPanel() {
             })}
           </ul>
         )}
-      </div>
-
-      {/* Route Stats - shown above buttons so they're always visible */}
-      {(dayRoutes.original || dayRoutes.optimized) && (
-        <div className="stop-panel-section route-stats-section">
-          <div className="route-stats">
-            {dayRoutes.original && (
-              <div className="route-stat">
-                <div className="stat-label">Original Route</div>
-                <div className="stat-values">
-                  <span className="stat-value">{formatDistance(dayRoutes.original.distance)}</span>
-                  <span className="stat-separator">•</span>
-                  <span className="stat-value">{formatDuration(dayRoutes.original.duration)}</span>
-                </div>
-              </div>
-            )}
-
-            {dayRoutes.optimized && (
-              <div className="route-stat optimized">
-                <div className="stat-label">Optimized Route</div>
-                <div className="stat-values">
-                  <span className="stat-value">{formatDistance(dayRoutes.optimized.distance)}</span>
-                  <span className="stat-separator">•</span>
-                  <span className="stat-value">{formatDuration(dayRoutes.optimized.duration)}</span>
-                </div>
-                {dayRoutes.original && (
-                  <div className="stat-savings">
-                    Saves {formatDistance(dayRoutes.original.distance - dayRoutes.optimized.distance)}
-                    {' and '}
-                    {formatDuration(dayRoutes.original.duration - dayRoutes.optimized.duration)}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Route Actions */}
-      <div className="stop-panel-section route-actions-section">
-        <div className="action-buttons">
-          <button
-            className="btn btn-primary"
-            onClick={handleCalculateRoute}
-            disabled={!canCalculateRoute}
-          >
-            {isCalculating ? 'Calculating...' : 'Calculate Route'}
-          </button>
-
-          <button
-            className="btn btn-optimize"
-            onClick={handleOptimizeRoute}
-            disabled={!canOptimizeRoute}
-          >
-            {isOptimizing ? 'Optimizing...' : 'Optimize Route'}
-          </button>
-
-          {canCompareRoutes && (
-            <button
-              className={`btn btn-toggle ${showComparison ? 'active' : ''}`}
-              onClick={handleToggleComparison}
-            >
-              {showComparison ? 'Hide Comparison' : 'Compare Routes'}
-            </button>
-          )}
-
-          <button
-            className="btn btn-secondary"
-            onClick={handleClearAll}
-            disabled={stops.length === 0}
-          >
-            Clear All
-          </button>
-        </div>
       </div>
 
     </div>
