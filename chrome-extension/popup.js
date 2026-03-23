@@ -848,7 +848,7 @@ function sendToRouteOptimizer() {
   // Encode as base64 JSON
   const json = JSON.stringify(stopData);
   const encoded = btoa(unescape(encodeURIComponent(json)));
-  const url = `${appUrl}?data=${encoded}`;
+  const url = `${appUrl}#data=${encoded}`;
 
   chrome.tabs.create({ url });
 

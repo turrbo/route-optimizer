@@ -34,7 +34,10 @@ function App() {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    // Support both hash fragment (#data=...) and legacy query param (?data=...)
+    const hash = window.location.hash.slice(1); // remove leading #
+    const hashParams = new URLSearchParams(hash);
+    const queryParams = new URLSearchParams(window.location.search);
 
     async function importAndGeocode(stopList) {
       // Add all stops first (with addresses but no coordinates)
@@ -76,8 +79,9 @@ function App() {
       setGeocodingProgress(null);
     }
 
-    // New format: ?data=<base64 JSON> with full stop metadata
-    const dataParam = params.get('data');
+    // New format: #data=<base64 JSON> (hash fragment, no server length limit)
+    // Also supports legacy ?data=<base64 JSON> query param
+    const dataParam = hashParams.get('data') || queryParams.get('data');
     if (dataParam) {
       try {
         const json = decodeURIComponent(escape(atob(dataParam)));
@@ -93,7 +97,7 @@ function App() {
     }
 
     // Legacy format: ?stops=address1|address2
-    const stopsParam = params.get('stops');
+    const stopsParam = queryParams.get('stops');
     if (stopsParam) {
       const addresses = stopsParam.split('|').map(a => decodeURIComponent(a.trim())).filter(Boolean);
       importAndGeocode(addresses.map(a => ({ address: a })));
