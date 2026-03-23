@@ -347,12 +347,19 @@
   font-size: 0.75rem;
 }
 
+/* Route Stats - pinned above actions */
+.route-stats-section {
+  flex-shrink: 0;
+  padding: 1rem 1.5rem;
+}
+
 /* Route Actions */
 .route-actions-section {
   flex-shrink: 1;
   overflow-y: auto;
   border-bottom: none;
-  min-height: 80px;
+  min-height: 60px;
+  padding-top: 0.75rem;
 }
 
 .action-buttons {
@@ -362,9 +369,8 @@
 }
 
 .route-stats {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--mr-gray-200);
+  margin: 0;
+  padding: 0;
 }
 
 .route-stat {

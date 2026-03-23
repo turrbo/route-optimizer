@@ -439,10 +439,44 @@ export default function StopPanel() {
         )}
       </div>
 
+      {/* Route Stats - shown above buttons so they're always visible */}
+      {(dayRoutes.original || dayRoutes.optimized) && (
+        <div className="stop-panel-section route-stats-section">
+          <div className="route-stats">
+            {dayRoutes.original && (
+              <div className="route-stat">
+                <div className="stat-label">Original Route</div>
+                <div className="stat-values">
+                  <span className="stat-value">{formatDistance(dayRoutes.original.distance)}</span>
+                  <span className="stat-separator">•</span>
+                  <span className="stat-value">{formatDuration(dayRoutes.original.duration)}</span>
+                </div>
+              </div>
+            )}
+
+            {dayRoutes.optimized && (
+              <div className="route-stat optimized">
+                <div className="stat-label">Optimized Route</div>
+                <div className="stat-values">
+                  <span className="stat-value">{formatDistance(dayRoutes.optimized.distance)}</span>
+                  <span className="stat-separator">•</span>
+                  <span className="stat-value">{formatDuration(dayRoutes.optimized.duration)}</span>
+                </div>
+                {dayRoutes.original && (
+                  <div className="stat-savings">
+                    Saves {formatDistance(dayRoutes.original.distance - dayRoutes.optimized.distance)}
+                    {' and '}
+                    {formatDuration(dayRoutes.original.duration - dayRoutes.optimized.duration)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Route Actions */}
       <div className="stop-panel-section route-actions-section">
-        <h2 className="section-title">Route Actions</h2>
-
         <div className="action-buttons">
           <button
             className="btn btn-primary"
@@ -477,40 +511,6 @@ export default function StopPanel() {
             Clear All
           </button>
         </div>
-
-        {/* Route Stats */}
-        {(dayRoutes.original || dayRoutes.optimized) && (
-          <div className="route-stats">
-            {dayRoutes.original && (
-              <div className="route-stat">
-                <div className="stat-label">Original Route</div>
-                <div className="stat-values">
-                  <span className="stat-value">{formatDistance(dayRoutes.original.distance)}</span>
-                  <span className="stat-separator">•</span>
-                  <span className="stat-value">{formatDuration(dayRoutes.original.duration)}</span>
-                </div>
-              </div>
-            )}
-
-            {dayRoutes.optimized && (
-              <div className="route-stat optimized">
-                <div className="stat-label">Optimized Route</div>
-                <div className="stat-values">
-                  <span className="stat-value">{formatDistance(dayRoutes.optimized.distance)}</span>
-                  <span className="stat-separator">•</span>
-                  <span className="stat-value">{formatDuration(dayRoutes.optimized.duration)}</span>
-                </div>
-                {dayRoutes.original && (
-                  <div className="stat-savings">
-                    Saves {formatDistance(dayRoutes.original.distance - dayRoutes.optimized.distance)}
-                    {' and '}
-                    {formatDuration(dayRoutes.original.duration - dayRoutes.optimized.duration)}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
     </div>
