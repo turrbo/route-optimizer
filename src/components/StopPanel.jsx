@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import useRouteStore from '../store/routeStore';
 import { searchAddresses, geocodeAddress } from '../utils/geocoding';
+import { calculateRoute, optimizeRoute, formatDistance, formatDuration } from '../utils/routing';
 import './StopPanel.css';
 
 const SURVEY_TYPES = [
@@ -22,14 +23,24 @@ export default function StopPanel() {
     reorderStops,
     clearStops,
     activeDay,
+    routes,
+    showComparison,
+    setShowComparison,
+    isCalculating,
+    isOptimizing,
     isGeocoding,
+    setIsCalculating,
+    setIsOptimizing,
     setIsGeocoding,
+    setRoute,
     clearRoute,
+    orsApiKey,
     setError,
     clearError
   } = useRouteStore();
 
   const stops = getStopsForDay(activeDay);
+  const dayRoutes = routes[activeDay] || { original: null, optimized: null };
 
   // Add Stop Form State
   const [addressInput, setAddressInput] = useState('');
@@ -161,10 +172,73 @@ export default function StopPanel() {
     updateStop(stopId, { [field]: value });
   };
 
+  // Build route-ready stop list: home first, stops in order, home last
+  const buildRouteStops = (stopsArr) => {
+    const homeStop = stopsArr.find(s => s.isHomeAddress);
+    const nonHome = stopsArr.filter(s => !s.isHomeAddress);
+    if (homeStop) {
+      // Home as start and end (clone for end so routing gets return trip)
+      return [homeStop, ...nonHome, { ...homeStop, id: homeStop.id + '-return' }];
+    }
+    return stopsArr;
+  };
+
+  const handleCalculateRoute = async () => {
+    if (stops.length < 2) return;
+
+    setIsCalculating(true);
+    clearError();
+
+    try {
+      const routeStops = buildRouteStops(stops);
+      const routeData = await calculateRoute(routeStops, orsApiKey);
+      setRoute(activeDay, 'original', routeData);
+    } catch (error) {
+      console.error('Route calculation error:', error);
+      setError(error.message || 'Route calculation failed. Check console for details.');
+    } finally {
+      setIsCalculating(false);
+    }
+  };
+
+  const handleOptimizeRoute = async () => {
+    if (stops.length < 3) return;
+
+    setIsOptimizing(true);
+    clearError();
+
+    try {
+      const routeStops = buildRouteStops(stops);
+      const optimizedData = await optimizeRoute(routeStops, orsApiKey);
+      setRoute(activeDay, 'optimized', optimizedData);
+
+      // Reorder stops in the list to match the optimized sequence
+      if (optimizedData.optimizedOrder) {
+        // Filter out the home-return clone ID (ends with '-return')
+        const realIds = optimizedData.optimizedOrder.filter(id => !id.endsWith('-return'));
+        reorderStops(activeDay, realIds);
+      }
+    } catch (error) {
+      console.error('Route optimization error:', error);
+      setError(error.message || 'Route optimization failed. Check console for details.');
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
   const handleClearAll = () => {
     clearStops(activeDay);
     clearRoute(activeDay);
+    setShowComparison(false);
   };
+
+  const handleToggleComparison = () => {
+    setShowComparison(!showComparison);
+  };
+
+  const canCalculateRoute = stops.length >= 2 && !isCalculating;
+  const canOptimizeRoute = stops.length >= 3 && !isOptimizing;
+  const canCompareRoutes = dayRoutes.original && dayRoutes.optimized;
 
   return (
     <div className="stop-panel">
@@ -253,19 +327,81 @@ export default function StopPanel() {
         </button>
       </div>
 
-      {/* Stop List */}
-      <div className="stop-panel-section stop-list-section">
-        <div className="stop-list-header">
-          <h2 className="section-title">Stops ({stops.length})</h2>
-          {stops.length > 0 && (
+      {/* Route Stats + Actions - pinned below Add Stop form */}
+      <div className="stop-panel-section route-actions-section">
+        {/* Route Stats */}
+        {(dayRoutes.original || dayRoutes.optimized) && (
+          <div className="route-stats">
+            {dayRoutes.original && (
+              <div className="route-stat">
+                <div className="stat-label">Original Route</div>
+                <div className="stat-values">
+                  <span className="stat-value">{formatDistance(dayRoutes.original.distance)}</span>
+                  <span className="stat-separator">•</span>
+                  <span className="stat-value">{formatDuration(dayRoutes.original.duration)}</span>
+                </div>
+              </div>
+            )}
+
+            {dayRoutes.optimized && (
+              <div className="route-stat optimized">
+                <div className="stat-label">Optimized Route</div>
+                <div className="stat-values">
+                  <span className="stat-value">{formatDistance(dayRoutes.optimized.distance)}</span>
+                  <span className="stat-separator">•</span>
+                  <span className="stat-value">{formatDuration(dayRoutes.optimized.duration)}</span>
+                </div>
+                {dayRoutes.original && (
+                  <div className="stat-savings">
+                    Saves {formatDistance(dayRoutes.original.distance - dayRoutes.optimized.distance)}
+                    {' and '}
+                    {formatDuration(dayRoutes.original.duration - dayRoutes.optimized.duration)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="action-buttons">
+          <button
+            className="btn btn-primary"
+            onClick={handleCalculateRoute}
+            disabled={!canCalculateRoute}
+          >
+            {isCalculating ? 'Calculating...' : 'Calculate Route'}
+          </button>
+
+          <button
+            className="btn btn-optimize"
+            onClick={handleOptimizeRoute}
+            disabled={!canOptimizeRoute}
+          >
+            {isOptimizing ? 'Optimizing...' : 'Optimize Route'}
+          </button>
+
+          {canCompareRoutes && (
             <button
-              className="btn btn-secondary btn-clear-sm"
-              onClick={handleClearAll}
+              className={`btn btn-toggle ${showComparison ? 'active' : ''}`}
+              onClick={handleToggleComparison}
             >
-              Clear All
+              {showComparison ? 'Hide Comparison' : 'Compare Routes'}
             </button>
           )}
+
+          <button
+            className="btn btn-secondary"
+            onClick={handleClearAll}
+            disabled={stops.length === 0}
+          >
+            Clear All
+          </button>
         </div>
+      </div>
+
+      {/* Stop List - scrollable at bottom */}
+      <div className="stop-panel-section stop-list-section">
+        <h2 className="section-title">Stops ({stops.length})</h2>
 
         {stops.length === 0 ? (
           <div className="empty-state">
