@@ -339,6 +339,27 @@
   margin-top: 0.5rem;
 }
 
+.edit-address-group {
+  grid-column: 1 / -1;
+}
+
+.edit-address-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.edit-address-row .text-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-regeocode {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .stop-edit-form .form-group {
   margin-bottom: 0;
 }

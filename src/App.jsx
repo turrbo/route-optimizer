@@ -56,12 +56,21 @@ function App() {
         addedIds.push({ id, address: stop.address });
       }
 
-      // Then geocode each one sequentially (Nominatim: 1 req/sec)
+      // Geocode each stop, caching results so duplicate addresses
+      // (e.g. the same home address on every day) only get looked up once
+      const geocodeCache = {};
       setGeocodingProgress({ done: 0, total: addedIds.length });
       let done = 0;
       for (const item of addedIds) {
+        const addrKey = (item.address || '').trim().toLowerCase();
         try {
-          const geo = await geocodeAddress(item.address);
+          let geo;
+          if (geocodeCache[addrKey]) {
+            geo = geocodeCache[addrKey];
+          } else {
+            geo = await geocodeAddress(item.address);
+            geocodeCache[addrKey] = geo;
+          }
           updateStop(item.id, {
             address: geo.displayName,
             lat: geo.lat,

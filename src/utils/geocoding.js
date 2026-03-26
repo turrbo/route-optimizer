@@ -336,32 +336,67 @@ export async function reverseGeocode(lat, lng) {
 }
 
 // ---------------------------------------------------------------------------
-// Address search (autocomplete) - still Nominatim for speed
+// Address search (autocomplete) with Census Bureau fallback
 // ---------------------------------------------------------------------------
 
 export async function searchAddresses(query) {
-  await throttleNominatim();
-  const params = new URLSearchParams({
-    q: query,
-    format: 'json',
-    addressdetails: '1',
-    limit: '5',
-    countrycodes: 'us',
-  });
+  // 1. Try Nominatim first
+  try {
+    await throttleNominatim();
+    const params = new URLSearchParams({
+      q: query,
+      format: 'json',
+      addressdetails: '1',
+      limit: '5',
+      countrycodes: 'us',
+    });
 
-  const res = await fetch(`${NOMINATIM_BASE}/search?${params}`, {
-    headers: { 'User-Agent': 'MuellerRouteOptimizer/1.0' }
-  });
+    const res = await fetch(`${NOMINATIM_BASE}/search?${params}`, {
+      headers: { 'User-Agent': 'MuellerRouteOptimizer/1.0' }
+    });
 
-  if (!res.ok) return [];
-  const data = await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      if (data.length > 0) {
+        return data.map(r => ({
+          lat: parseFloat(r.lat),
+          lng: parseFloat(r.lon),
+          displayName: r.display_name,
+          city: r.address?.city || r.address?.town || r.address?.village || '',
+          state: r.address?.state || '',
+          zip: r.address?.postcode || '',
+        }));
+      }
+    }
+  } catch {
+    // Nominatim failed, try fallback
+  }
 
-  return data.map(r => ({
-    lat: parseFloat(r.lat),
-    lng: parseFloat(r.lon),
-    displayName: r.display_name,
-    city: r.address?.city || r.address?.town || r.address?.village || '',
-    state: r.address?.state || '',
-    zip: r.address?.postcode || '',
-  }));
+  // 2. Fallback: Census Bureau one-line search
+  try {
+    const cParams = new URLSearchParams({
+      address: query,
+      benchmark: 'Public_AR_Current',
+      format: 'json',
+    });
+    const cRes = await fetch(`${CENSUS_BASE}/onelineaddress?${cParams}`);
+    if (cRes.ok) {
+      const cData = await cRes.json();
+      const matches = cData?.result?.addressMatches;
+      if (matches && matches.length > 0) {
+        return matches.map(m => ({
+          lat: m.coordinates.y,
+          lng: m.coordinates.x,
+          displayName: m.matchedAddress,
+          city: m.addressComponents?.city || '',
+          state: m.addressComponents?.state || '',
+          zip: m.addressComponents?.zip || '',
+        }));
+      }
+    }
+  } catch {
+    // Census also failed
+  }
+
+  return [];
 }

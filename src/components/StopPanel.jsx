@@ -50,6 +50,8 @@ export default function StopPanel() {
   const [stopNumber, setStopNumber] = useState('');
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [editingStopId, setEditingStopId] = useState(null);
+  const [editAddress, setEditAddress] = useState('');
+  const [isReGeocoding, setIsReGeocoding] = useState(null); // stop id being re-geocoded
 
   const debounceTimerRef = useRef(null);
   const addressInputRef = useRef(null);
@@ -165,11 +167,39 @@ export default function StopPanel() {
   };
 
   const handleToggleEdit = (stopId) => {
-    setEditingStopId(editingStopId === stopId ? null : stopId);
+    if (editingStopId === stopId) {
+      setEditingStopId(null);
+      setEditAddress('');
+    } else {
+      setEditingStopId(stopId);
+      const stop = stops.find(s => s.id === stopId);
+      setEditAddress(stop?.address || '');
+    }
   };
 
   const handleUpdateStop = (stopId, field, value) => {
     updateStop(stopId, { [field]: value });
+  };
+
+  const handleReGeocode = async (stopId) => {
+    if (!editAddress.trim()) return;
+    setIsReGeocoding(stopId);
+    try {
+      const geo = await geocodeAddress(editAddress.trim());
+      updateStop(stopId, {
+        address: geo.displayName,
+        lat: geo.lat,
+        lng: geo.lng,
+        city: geo.city,
+        state: geo.state,
+        zip: geo.zip,
+      });
+      setEditAddress(geo.displayName);
+    } catch (err) {
+      setError('Could not find that address. Please try a different format.');
+    } finally {
+      setIsReGeocoding(null);
+    }
   };
 
   // Build route-ready stop list: home first, stops in order, home last
@@ -481,6 +511,26 @@ export default function StopPanel() {
 
                 {editingStopId === stop.id && (
                   <div className="stop-edit-form">
+                    <div className="form-group edit-address-group">
+                      <label>Address</label>
+                      <div className="edit-address-row">
+                        <input
+                          type="text"
+                          className="text-input"
+                          value={editAddress}
+                          onChange={(e) => setEditAddress(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleReGeocode(stop.id); }}
+                          disabled={isReGeocoding === stop.id}
+                        />
+                        <button
+                          className="btn btn-primary btn-regeocode"
+                          onClick={() => handleReGeocode(stop.id)}
+                          disabled={isReGeocoding === stop.id || !editAddress.trim()}
+                        >
+                          {isReGeocoding === stop.id ? '...' : 'Update'}
+                        </button>
+                      </div>
+                    </div>
                     <div className="form-group">
                       <label>Case #</label>
                       <input
