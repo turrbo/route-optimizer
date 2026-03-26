@@ -91,9 +91,14 @@
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 4px;
   font-size: 12px;
-  background: rgba(255,255,255,0.1);
+  background: var(--mr-charcoal, #262626);
   color: var(--mr-white);
   max-width: 200px;
+}
+
+.oc-bar-fr select option {
+  background: var(--mr-white);
+  color: var(--mr-dark);
 }
 
 .oc-bar-fr-count {

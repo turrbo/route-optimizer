@@ -105,22 +105,17 @@
   border-color: #a50d25;
 }
 
-/* Week Grid - 5 weekday cards + 2 weekend cards */
+/* Week Grid - 6 cards (Mon-Sat) in a single row */
 .week-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
   margin-bottom: 2rem;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
   .week-grid {
-    grid-template-columns: repeat(5, 1fr);
-  }
-
-  /* Weekend cards span into a separate row of 2 */
-  .day-card.is-weekend {
-    grid-column: span 1;
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 

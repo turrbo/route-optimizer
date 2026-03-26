@@ -25,13 +25,13 @@ const formatDateStr = (date) => {
 };
 
 /**
- * Generate array of 7 dates (Mon-Fri + Sat-Sun) from a start date
+ * Generate array of 6 dates (Mon-Sat) from a start date (no Sunday)
  */
 const getWeekDays = (startDateStr) => {
   const startDate = parseLocalDate(startDateStr);
   const days = [];
 
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 6; i++) {
     const date = new Date(startDate);
     date.setDate(startDate.getDate() + i);
     const dow = date.getDay();
@@ -40,7 +40,7 @@ const getWeekDays = (startDateStr) => {
       dayName: date.toLocaleDateString('en-US', { weekday: 'short' }),
       dayNum: date.getDate(),
       monthName: date.toLocaleDateString('en-US', { month: 'short' }),
-      isWeekend: dow === 0 || dow === 6
+      isWeekend: dow === 6
     });
   }
 

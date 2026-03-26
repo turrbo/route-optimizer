@@ -158,7 +158,7 @@ async function optimizeRouteLocal(stops, apiKey) {
 
 export function formatDistance(meters) {
   const miles = meters / 1609.34;
-  return miles < 0.1 ? `${Math.round(meters)} ft` : `${miles.toFixed(1)} mi`;
+  return `${miles.toFixed(1)} mi`;
 }
 
 export function formatDuration(seconds) {

@@ -56,8 +56,9 @@
 }
 
 .logo-text span {
-  color: rgba(255,255,255,0.5);
-  font-weight: 400;
+  color: var(--mr-red);
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(200, 16, 46, 0.6), 0 0 24px rgba(200, 16, 46, 0.3);
 }
 
 .header-nav {
