@@ -1,4 +1,5 @@
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
+const PHOTON_BASE = 'https://photon.komoot.io';
 const CENSUS_BASE = 'https://geocoding.geo.census.gov/geocoder/locations';
 const LOCATIONIQ_BASE = 'https://us1.locationiq.com/v1';
 // LocationIQ free tier key - register at locationiq.com for your own
@@ -27,6 +28,8 @@ async function throttleLocationIQ() {
 
 // ---------------------------------------------------------------------------
 // Address normalization - clean up addresses before geocoding
+// Only expand abbreviations on the STREET portion (before the first comma)
+// to avoid mangling city names like "St. Louis" or "Ft. Worth"
 // ---------------------------------------------------------------------------
 
 const STREET_ABBREVS = {
@@ -60,11 +63,25 @@ function normalizeAddress(address) {
   let normalized = address.trim().replace(/\s+/g, ' ');
   // Strip apt/unit/suite/# suffixes (geocoders can't find them)
   normalized = normalized.replace(/\s*(?:apt|unit|suite|ste|#|bldg|building)\s*[#.]?\s*\S+$/i, '');
-  // Expand street type abbreviations (only at word boundaries)
-  normalized = normalized.replace(/\b(\w+\.?)\b/g, (match) => {
-    const lower = match.toLowerCase();
-    return STREET_ABBREVS[lower] || DIRECTION_ABBREVS[lower] || match;
-  });
+
+  // Only expand abbreviations on the street portion (before first comma)
+  const commaIdx = normalized.indexOf(',');
+  if (commaIdx > 0) {
+    const street = normalized.substring(0, commaIdx);
+    const rest = normalized.substring(commaIdx);
+    const expandedStreet = street.replace(/\b(\w+\.?)\b/g, (match) => {
+      const lower = match.toLowerCase();
+      return STREET_ABBREVS[lower] || DIRECTION_ABBREVS[lower] || match;
+    });
+    normalized = expandedStreet + rest;
+  } else {
+    // No comma - expand the whole thing (single-line street address)
+    normalized = normalized.replace(/\b(\w+\.?)\b/g, (match) => {
+      const lower = match.toLowerCase();
+      return STREET_ABBREVS[lower] || DIRECTION_ABBREVS[lower] || match;
+    });
+  }
+
   return normalized;
 }
 
@@ -166,7 +183,55 @@ async function nominatimGeocode(address) {
 }
 
 // ---------------------------------------------------------------------------
-// Geocoder 2: US Census Bureau (free, no key, US addresses only)
+// Geocoder 2: Photon by Komoot (free, no key, OSM data, separate infra)
+// ---------------------------------------------------------------------------
+
+async function photonGeocode(address) {
+  try {
+    const params = new URLSearchParams({
+      q: address,
+      limit: '1',
+      lang: 'en',
+    });
+
+    const res = await fetch(`${PHOTON_BASE}/api/?${params}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    const features = data?.features;
+    if (!features || features.length === 0) return null;
+
+    const feat = features[0];
+    const props = feat.properties || {};
+    const coords = feat.geometry?.coordinates; // [lng, lat]
+    if (!coords) return null;
+
+    const city = props.city || props.town || props.village || '';
+    const state = props.state || '';
+    const zip = props.postcode || '';
+    const street = props.street || '';
+    const house = props.housenumber || '';
+    const displayName = [
+      house && street ? `${house} ${street}` : street || props.name || address,
+      city, state, zip
+    ].filter(Boolean).join(', ');
+
+    return {
+      lat: coords[1],
+      lng: coords[0],
+      displayName,
+      city,
+      state,
+      zip,
+      source: 'photon',
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Geocoder 3: US Census Bureau (free, no key, US addresses only)
 // ---------------------------------------------------------------------------
 
 async function censusGeocode(address) {
@@ -226,7 +291,7 @@ async function censusGeocode(address) {
 }
 
 // ---------------------------------------------------------------------------
-// Geocoder 3: LocationIQ (5,000 req/day free, Nominatim-compatible)
+// Geocoder 4: LocationIQ (5,000 req/day free, Nominatim-compatible)
 // ---------------------------------------------------------------------------
 
 async function locationIQGeocode(address) {
@@ -294,11 +359,15 @@ export async function geocodeAddress(address) {
   const nom = await nominatimGeocode(normalized);
   if (nom) return nom;
 
-  // 2. US Census Bureau (free, authoritative for US residential)
+  // 2. Photon by Komoot (free, no key, separate infrastructure from Nominatim)
+  const phot = await photonGeocode(normalized);
+  if (phot) return phot;
+
+  // 3. US Census Bureau (free, authoritative for US residential)
   const census = await censusGeocode(normalized);
   if (census) return census;
 
-  // 3. LocationIQ (5K/day free, different data processing)
+  // 4. LocationIQ (5K/day free, different data processing)
   const liq = await locationIQGeocode(normalized);
   if (liq) return liq;
 
@@ -336,7 +405,7 @@ export async function reverseGeocode(lat, lng) {
 }
 
 // ---------------------------------------------------------------------------
-// Address search (autocomplete) with Census Bureau fallback
+// Address search (autocomplete) with Photon + Census Bureau fallbacks
 // ---------------------------------------------------------------------------
 
 export async function searchAddresses(query) {
@@ -369,10 +438,49 @@ export async function searchAddresses(query) {
       }
     }
   } catch {
-    // Nominatim failed, try fallback
+    // Nominatim failed, try fallbacks
   }
 
-  // 2. Fallback: Census Bureau one-line search
+  // 2. Fallback: Photon (supports autocomplete, same OSM data, separate infra)
+  try {
+    const pParams = new URLSearchParams({
+      q: query,
+      limit: '5',
+      lang: 'en',
+    });
+    const pRes = await fetch(`${PHOTON_BASE}/api/?${pParams}`);
+    if (pRes.ok) {
+      const pData = await pRes.json();
+      const features = pData?.features;
+      if (features && features.length > 0) {
+        return features.map(f => {
+          const props = f.properties || {};
+          const coords = f.geometry?.coordinates || [0, 0];
+          const city = props.city || props.town || props.village || '';
+          const state = props.state || '';
+          const zip = props.postcode || '';
+          const street = props.street || '';
+          const house = props.housenumber || '';
+          const displayName = [
+            house && street ? `${house} ${street}` : street || props.name || '',
+            city, state, zip
+          ].filter(Boolean).join(', ');
+          return {
+            lat: coords[1],
+            lng: coords[0],
+            displayName,
+            city,
+            state,
+            zip,
+          };
+        });
+      }
+    }
+  } catch {
+    // Photon failed, try Census
+  }
+
+  // 3. Fallback: Census Bureau one-line search (full addresses only)
   try {
     const cParams = new URLSearchParams({
       address: query,

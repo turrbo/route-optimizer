@@ -8,9 +8,12 @@ const CHANGELOG = [
     changes: [
       'Stop addresses can now be edited inline - click the pencil icon to change an address and re-geocode',
       'Manual geocode button (map pin icon) on each stop to retry geocoding',
+      'Added Photon geocoder as fallback when Nominatim is down or returns no results',
+      'Geocoding fallback chain now: Nominatim -> Photon -> Census Bureau -> LocationIQ',
+      'Address search autocomplete works even when Nominatim is unavailable (Photon fallback)',
+      'Fixed address normalization bug that could mangle city names (e.g. St. Louis)',
       'Home address geocoding improved - failures no longer prevent retries on subsequent days',
       'Open Cases Excel data now persists when clicking New Rep (only cleared manually)',
-      'Address search falls back to US Census Bureau when Nominatim returns no results',
       'Update Log and version number added to header',
     ],
   },
