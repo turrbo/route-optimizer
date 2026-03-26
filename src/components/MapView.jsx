@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -6,6 +6,9 @@ import useRouteStore from '../store/routeStore';
 import { reverseGeocode } from '../utils/geocoding';
 import { filterOpenCases } from '../utils/excelParser';
 import './MapView.css';
+
+// Shared ref so the map click handler can skip clicks caused by popup buttons
+let lastPopupActionTime = 0;
 
 // Component to handle map bounds and events
 const MapController = ({ stops }) => {
@@ -28,6 +31,9 @@ const MapController = ({ stops }) => {
   // Handle map clicks to add stops
   useEffect(() => {
     const handleMapClick = async (e) => {
+      // Skip if a popup button was just clicked (prevents duplicate stop)
+      if (Date.now() - lastPopupActionTime < 500) return;
+
       const { lat, lng } = e.latlng;
 
       try {
@@ -159,13 +165,16 @@ const MapView = () => {
     return { center: [validStops[0].lat, validStops[0].lng], zoom: 13 };
   }, [stops]);
 
-  // Check if a case is already added as a stop
-  const isCaseInRoute = (controlNumber) => {
-    return allStops.some(s => s.caseNumber === controlNumber);
+  // Check if a case is already added as a stop, and return its stop number
+  const getCaseStopNumber = (controlNumber) => {
+    const nonHomeStops = stops.filter(s => !s.isHomeAddress);
+    const idx = nonHomeStops.findIndex(s => s.caseNumber === controlNumber);
+    return idx >= 0 ? idx + 1 : null;
   };
 
   const handleAddCaseToRoute = (caseItem) => {
-    if (isCaseInRoute(caseItem.controlNumber)) return;
+    lastPopupActionTime = Date.now();
+    if (getCaseStopNumber(caseItem.controlNumber) !== null) return;
     addStop({
       address: `${caseItem.address}, ${caseItem.city}, ${caseItem.state}`,
       lat: caseItem.lat,
@@ -253,57 +262,65 @@ const MapView = () => {
           />
         )}
 
-        {/* Open case markers - unassigned (green) */}
-        {visibleCases.unassigned.map((c) => (
-          <Marker
-            key={`oc-u-${c.controlNumber}`}
-            position={[c.lat, c.lng]}
-            icon={caseIconUnassigned}
-          >
-            <Popup>
-              <div className="stop-popup">
-                <div className="popup-address">{c.address}, {c.city}, {c.state}</div>
-                <div className="popup-field"><strong>Control #:</strong> {c.controlNumber}</div>
-                <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
-                <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
-                <div className="popup-field" style={{ color: '#16a34a', fontWeight: 600 }}>Unassigned</div>
-                {!isCaseInRoute(c.controlNumber) ? (
-                  <button className="popup-add-btn" onClick={() => handleAddCaseToRoute(c)}>
-                    Add to Route
-                  </button>
-                ) : (
-                  <div className="popup-field" style={{ color: '#6b7280', fontStyle: 'italic' }}>Already in route</div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {/* Open case markers - unassigned (green dot, or numbered stop if in route) */}
+        {visibleCases.unassigned.map((c) => {
+          const stopNum = getCaseStopNumber(c.controlNumber);
+          const inRoute = stopNum !== null;
+          return (
+            <Marker
+              key={`oc-u-${c.controlNumber}`}
+              position={[c.lat, c.lng]}
+              icon={inRoute ? createNumberedIcon(stopNum) : caseIconUnassigned}
+            >
+              <Popup>
+                <div className="stop-popup">
+                  <div className="popup-address">{c.address}, {c.city}, {c.state}</div>
+                  <div className="popup-field"><strong>Control #:</strong> {c.controlNumber}</div>
+                  <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
+                  <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
+                  <div className="popup-field" style={{ color: '#16a34a', fontWeight: 600 }}>Unassigned</div>
+                  {!inRoute ? (
+                    <button className="popup-add-btn" onClick={() => handleAddCaseToRoute(c)}>
+                      Add to Route
+                    </button>
+                  ) : (
+                    <div className="popup-field" style={{ color: '#c8102e', fontWeight: 600 }}>Stop #{stopNum}</div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
 
-        {/* Open case markers - assigned to selected FR (light blue) */}
-        {visibleCases.assigned.map((c) => (
-          <Marker
-            key={`oc-a-${c.controlNumber}`}
-            position={[c.lat, c.lng]}
-            icon={caseIconAssigned}
-          >
-            <Popup>
-              <div className="stop-popup">
-                <div className="popup-address">{c.address}, {c.city}, {c.state}</div>
-                <div className="popup-field"><strong>Control #:</strong> {c.controlNumber}</div>
-                <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
-                <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
-                <div className="popup-field" style={{ color: '#38bdf8', fontWeight: 600 }}>FR: {c.frAssigned}</div>
-                {!isCaseInRoute(c.controlNumber) ? (
-                  <button className="popup-add-btn" onClick={() => handleAddCaseToRoute(c)}>
-                    Add to Route
-                  </button>
-                ) : (
-                  <div className="popup-field" style={{ color: '#6b7280', fontStyle: 'italic' }}>Already in route</div>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {/* Open case markers - assigned to selected FR (blue dot, or numbered stop if in route) */}
+        {visibleCases.assigned.map((c) => {
+          const stopNum = getCaseStopNumber(c.controlNumber);
+          const inRoute = stopNum !== null;
+          return (
+            <Marker
+              key={`oc-a-${c.controlNumber}`}
+              position={[c.lat, c.lng]}
+              icon={inRoute ? createNumberedIcon(stopNum) : caseIconAssigned}
+            >
+              <Popup>
+                <div className="stop-popup">
+                  <div className="popup-address">{c.address}, {c.city}, {c.state}</div>
+                  <div className="popup-field"><strong>Control #:</strong> {c.controlNumber}</div>
+                  <div className="popup-field"><strong>Survey:</strong> {c.surveyType}</div>
+                  <div className="popup-field"><strong>Ordered:</strong> {c.dateOrdered}</div>
+                  <div className="popup-field" style={{ color: '#38bdf8', fontWeight: 600 }}>FR: {c.frAssigned}</div>
+                  {!inRoute ? (
+                    <button className="popup-add-btn" onClick={() => handleAddCaseToRoute(c)}>
+                      Add to Route
+                    </button>
+                  ) : (
+                    <div className="popup-field" style={{ color: '#c8102e', fontWeight: 600 }}>Stop #{stopNum}</div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          );
+        })}
 
         {/* Render stop markers (on top of case markers) */}
         {stops.map((stop) => {
