@@ -118,7 +118,6 @@ const convertGeometryToLatLngs = (geometry) => {
 
 const MapView = () => {
   const activeDay = useRouteStore((state) => state.activeDay);
-  const getStopsForDay = useRouteStore((state) => state.getStopsForDay);
   const addStop = useRouteStore((state) => state.addStop);
   const routes = useRouteStore((state) => state.routes);
   const openCases = useRouteStore((state) => state.openCases);
@@ -127,10 +126,12 @@ const MapView = () => {
   const showUnassigned = useRouteStore((state) => state.showUnassigned);
   const allStops = useRouteStore((state) => state.stops);
 
-  // Get stops for the active day
+  // Get stops for the active day (allStops in deps ensures re-computation on add/remove)
   const stops = useMemo(() => {
-    return getStopsForDay(activeDay);
-  }, [getStopsForDay, activeDay]);
+    return allStops
+      .filter(s => s.dayDate === activeDay)
+      .sort((a, b) => a.stopNumber - b.stopNumber);
+  }, [allStops, activeDay]);
 
   // Filter open cases for the active day
   const visibleCases = useMemo(() => {
