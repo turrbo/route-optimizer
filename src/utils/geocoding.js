@@ -130,56 +130,60 @@ function parseAddress(address) {
 // ---------------------------------------------------------------------------
 
 async function nominatimGeocode(address) {
-  await throttleNominatim();
-  const parsed = parseAddress(address);
+  try {
+    await throttleNominatim();
+    const parsed = parseAddress(address);
 
-  let params;
-  if (parsed && parsed.city) {
-    // Structured query - more accurate
-    params = new URLSearchParams({
-      street: parsed.street,
-      city: parsed.city,
-      state: parsed.state,
-      postalcode: parsed.zip,
-      format: 'json',
-      addressdetails: '1',
-      limit: '1',
-      countrycodes: 'us',
-    });
-    // Remove empty params
-    for (const [k, v] of [...params.entries()]) {
-      if (!v) params.delete(k);
+    let params;
+    if (parsed && parsed.city) {
+      // Structured query - more accurate
+      params = new URLSearchParams({
+        street: parsed.street,
+        city: parsed.city,
+        state: parsed.state,
+        postalcode: parsed.zip,
+        format: 'json',
+        addressdetails: '1',
+        limit: '1',
+        countrycodes: 'us',
+      });
+      // Remove empty params
+      for (const [k, v] of [...params.entries()]) {
+        if (!v) params.delete(k);
+      }
+    } else {
+      // Fallback to free-form
+      params = new URLSearchParams({
+        q: address,
+        format: 'json',
+        addressdetails: '1',
+        limit: '1',
+        countrycodes: 'us',
+      });
     }
-  } else {
-    // Fallback to free-form
-    params = new URLSearchParams({
-      q: address,
-      format: 'json',
-      addressdetails: '1',
-      limit: '1',
-      countrycodes: 'us',
+
+    const res = await fetch(`${NOMINATIM_BASE}/search?${params}`, {
+      headers: { 'User-Agent': 'MuellerRouteOptimizer/1.0' }
     });
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.length) return null;
+
+    const result = data[0];
+    const addr = result.address || {};
+    return {
+      lat: parseFloat(result.lat),
+      lng: parseFloat(result.lon),
+      displayName: result.display_name,
+      city: addr.city || addr.town || addr.village || addr.hamlet || '',
+      state: addr.state || '',
+      zip: addr.postcode || '',
+      source: 'nominatim',
+    };
+  } catch {
+    return null;
   }
-
-  const res = await fetch(`${NOMINATIM_BASE}/search?${params}`, {
-    headers: { 'User-Agent': 'MuellerRouteOptimizer/1.0' }
-  });
-
-  if (!res.ok) return null;
-  const data = await res.json();
-  if (!data.length) return null;
-
-  const result = data[0];
-  const addr = result.address || {};
-  return {
-    lat: parseFloat(result.lat),
-    lng: parseFloat(result.lon),
-    displayName: result.display_name,
-    city: addr.city || addr.town || addr.village || addr.hamlet || '',
-    state: addr.state || '',
-    zip: addr.postcode || '',
-    source: 'nominatim',
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -355,21 +359,20 @@ async function locationIQGeocode(address) {
 export async function geocodeAddress(address) {
   const normalized = normalizeAddress(address);
 
+  // Each geocoder is wrapped individually so a failure in one
+  // never prevents the next from being tried.
+
   // 1. Nominatim (free, primary)
-  const nom = await nominatimGeocode(normalized);
-  if (nom) return nom;
+  try { const r = await nominatimGeocode(normalized); if (r) return r; } catch { /* fall through */ }
 
   // 2. Photon by Komoot (free, no key, separate infrastructure from Nominatim)
-  const phot = await photonGeocode(normalized);
-  if (phot) return phot;
+  try { const r = await photonGeocode(normalized); if (r) return r; } catch { /* fall through */ }
 
   // 3. US Census Bureau (free, authoritative for US residential)
-  const census = await censusGeocode(normalized);
-  if (census) return census;
+  try { const r = await censusGeocode(normalized); if (r) return r; } catch { /* fall through */ }
 
   // 4. LocationIQ (5K/day free, different data processing)
-  const liq = await locationIQGeocode(normalized);
-  if (liq) return liq;
+  try { const r = await locationIQGeocode(normalized); if (r) return r; } catch { /* fall through */ }
 
   // All failed
   throw new Error(`Address not found: ${address}`);
