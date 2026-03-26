@@ -58,29 +58,34 @@ function App() {
         addedIds.push({ id, address: stop.address });
       }
 
-      // Geocode each stop, caching results so duplicate addresses
-      // (e.g. the same home address on every day) only get looked up once
-      const geocodeCache = {};
+      // Geocode each stop, caching SUCCESSFUL results so duplicate addresses
+      // (e.g. the same home address on every day) only get looked up once.
+      // Failures are NOT cached so each duplicate gets a fresh retry.
+      const geocodeCache = {}; // addrKey -> geo result (only successes)
       setGeocodingProgress({ done: 0, total: addedIds.length });
       let done = 0;
       for (const item of addedIds) {
         const addrKey = (item.address || '').trim().toLowerCase();
         try {
-          let geo;
-          if (geocodeCache[addrKey]) {
-            geo = geocodeCache[addrKey];
-          } else {
-            geo = await geocodeAddress(item.address);
-            geocodeCache[addrKey] = geo;
+          let geo = geocodeCache[addrKey] || null;
+          if (!geo) {
+            try {
+              geo = await geocodeAddress(item.address);
+              geocodeCache[addrKey] = geo; // only cache successes
+            } catch {
+              geo = null;
+            }
           }
-          updateStop(item.id, {
-            address: geo.displayName,
-            lat: geo.lat,
-            lng: geo.lng,
-            city: geo.city,
-            state: geo.state,
-            zip: geo.zip,
-          });
+          if (geo) {
+            updateStop(item.id, {
+              address: geo.displayName,
+              lat: geo.lat,
+              lng: geo.lng,
+              city: geo.city,
+              state: geo.state,
+              zip: geo.zip,
+            });
+          }
         } catch (err) {
           console.warn(`Could not geocode "${item.address}":`, err.message);
         }

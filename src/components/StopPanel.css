@@ -236,6 +236,20 @@
   color: var(--mr-red);
 }
 
+.icon-btn.geocode-btn {
+  font-size: 0.875rem;
+  color: var(--mr-gray-400);
+}
+
+.icon-btn.geocode-btn:hover:not(:disabled) {
+  color: #2563eb;
+}
+
+.icon-btn.geocode-btn.needs-geocode {
+  color: #ea580c;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
 /* Stop List */
 .stop-list-section {
   flex: 1;

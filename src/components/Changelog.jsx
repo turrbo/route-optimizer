@@ -7,8 +7,11 @@ const CHANGELOG = [
     date: '2026-03-26',
     changes: [
       'Stop addresses can now be edited inline - click the pencil icon to change an address and re-geocode',
-      'Home address now geocodes correctly on all days of the week (cached lookups)',
+      'Manual geocode button (map pin icon) on each stop to retry geocoding',
+      'Home address geocoding improved - failures no longer prevent retries on subsequent days',
+      'Open Cases Excel data now persists when clicking New Rep (only cleared manually)',
       'Address search falls back to US Census Bureau when Nominatim returns no results',
+      'Update Log and version number added to header',
     ],
   },
   {

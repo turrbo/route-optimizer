@@ -164,6 +164,9 @@ const useRouteStore = create(
         stops: state.stops,
         routes: state.routes,
         weekStartDate: state.weekStartDate,
+        openCases: state.openCases,
+        openCasesFRNames: state.openCasesFRNames,
+        selectedFR: state.selectedFR,
       }),
     }
   )

@@ -181,11 +181,12 @@ export default function StopPanel() {
     updateStop(stopId, { [field]: value });
   };
 
-  const handleReGeocode = async (stopId) => {
-    if (!editAddress.trim()) return;
+  const handleReGeocode = async (stopId, addressOverride) => {
+    const addr = addressOverride || editAddress;
+    if (!addr.trim()) return;
     setIsReGeocoding(stopId);
     try {
-      const geo = await geocodeAddress(editAddress.trim());
+      const geo = await geocodeAddress(addr.trim());
       updateStop(stopId, {
         address: geo.displayName,
         lat: geo.lat,
@@ -194,7 +195,7 @@ export default function StopPanel() {
         state: geo.state,
         zip: geo.zip,
       });
-      setEditAddress(geo.displayName);
+      if (!addressOverride) setEditAddress(geo.displayName);
     } catch (err) {
       setError('Could not find that address. Please try a different format.');
     } finally {
@@ -476,6 +477,14 @@ export default function StopPanel() {
                     </div>
                   </div>
                   <div className="stop-actions">
+                    <button
+                      className={`icon-btn geocode-btn${(!stop.lat || !stop.lng) ? ' needs-geocode' : ''}`}
+                      onClick={() => handleReGeocode(stop.id, stop.address)}
+                      disabled={isReGeocoding === stop.id}
+                      title={(!stop.lat || !stop.lng) ? 'Geocode this address' : 'Re-geocode this address'}
+                    >
+                      {isReGeocoding === stop.id ? '...' : '\u{1F4CD}'}
+                    </button>
                     <button
                       className="icon-btn edit-btn"
                       onClick={() => handleToggleEdit(stop.id)}

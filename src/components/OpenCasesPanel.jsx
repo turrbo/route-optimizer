@@ -54,7 +54,7 @@ export default function OpenCasesBar() {
   const setError = useRouteStore(s => s.setError);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [fileName, setFileName] = useState('');
+  const [fileName, setFileName] = useState(openCases.length > 0 ? 'Open Cases (saved)' : '');
   const [showList, setShowList] = useState(false);
   const fileInputRef = useRef(null);
 
