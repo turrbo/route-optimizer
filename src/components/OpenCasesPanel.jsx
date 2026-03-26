@@ -46,9 +46,11 @@ export default function OpenCasesBar() {
   const openCasesFRNames = useRouteStore(s => s.openCasesFRNames);
   const selectedFR = useRouteStore(s => s.selectedFR);
   const showOpenCases = useRouteStore(s => s.showOpenCases);
+  const showUnassigned = useRouteStore(s => s.showUnassigned);
   const setOpenCases = useRouteStore(s => s.setOpenCases);
   const setSelectedFR = useRouteStore(s => s.setSelectedFR);
   const setShowOpenCases = useRouteStore(s => s.setShowOpenCases);
+  const setShowUnassigned = useRouteStore(s => s.setShowUnassigned);
   const clearOpenCases = useRouteStore(s => s.clearOpenCases);
   const geocodeCase = useRouteStore(s => s.geocodeCase);
   const setError = useRouteStore(s => s.setError);
@@ -159,10 +161,15 @@ export default function OpenCasesBar() {
       <div className="oc-bar-inner">
         <span className="oc-bar-label">Open Cases:</span>
 
-        <div className="oc-bar-counts">
+        <label className="oc-bar-toggle">
+          <input
+            type="checkbox"
+            checked={showUnassigned}
+            onChange={(e) => setShowUnassigned(e.target.checked)}
+          />
           <span className="oc-dot oc-dot-green"></span>
-          <span>{unassignedCases.length} unassigned</span>
-        </div>
+          {unassignedCases.length} unassigned
+        </label>
 
         <div className="oc-bar-fr">
           <span className="oc-dot oc-dot-blue"></span>

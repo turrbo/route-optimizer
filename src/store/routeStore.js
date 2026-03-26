@@ -142,9 +142,11 @@ const useRouteStore = create(
       openCasesFRNames: [],  // unique FR names from the file
       selectedFR: null,      // currently selected FR name to highlight
       showOpenCases: true,   // whether to show open case pins on map
+      showUnassigned: true,  // whether to show unassigned case pins
       setOpenCases: (cases, frNames) => set({ openCases: cases, openCasesFRNames: frNames }),
       setSelectedFR: (fr) => set({ selectedFR: fr }),
       setShowOpenCases: (show) => set({ showOpenCases: show }),
+      setShowUnassigned: (show) => set({ showUnassigned: show }),
       clearOpenCases: () => set({ openCases: [], openCasesFRNames: [], selectedFR: null }),
       // Update geocode coords on a case (creates new array ref so MapView re-renders)
       geocodeCase: (controlNumber, lat, lng) => set((state) => ({

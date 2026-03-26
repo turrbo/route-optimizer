@@ -124,6 +124,7 @@ const MapView = () => {
   const openCases = useRouteStore((state) => state.openCases);
   const selectedFR = useRouteStore((state) => state.selectedFR);
   const showOpenCases = useRouteStore((state) => state.showOpenCases);
+  const showUnassigned = useRouteStore((state) => state.showUnassigned);
   const allStops = useRouteStore((state) => state.stops);
 
   // Get stops for the active day
@@ -136,12 +137,14 @@ const MapView = () => {
     if (!showOpenCases || openCases.length === 0) return { unassigned: [], assigned: [] };
     const filtered = filterOpenCases(openCases, activeDay);
     return {
-      unassigned: filtered.filter(c => !c.frAssigned && c.lat && c.lng),
+      unassigned: showUnassigned
+        ? filtered.filter(c => !c.frAssigned && c.lat && c.lng)
+        : [],
       assigned: selectedFR
         ? filtered.filter(c => c.frAssigned === selectedFR && c.lat && c.lng)
         : [],
     };
-  }, [openCases, activeDay, selectedFR, showOpenCases]);
+  }, [openCases, activeDay, selectedFR, showOpenCases, showUnassigned]);
 
   // Get route geometries for the active day
   const routeData = useMemo(() => {
