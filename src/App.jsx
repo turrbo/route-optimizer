@@ -5,6 +5,7 @@ import MapView from './components/MapView';
 import StopPanel from './components/StopPanel';
 import OpenCasesBar from './components/OpenCasesPanel';
 import { WeekView } from './components/WeekView';
+import Changelog, { CURRENT_VERSION } from './components/Changelog';
 import './App.css';
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
 
   const [apiKeyInput, setApiKeyInput] = useState(orsApiKey);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
   const [geocodingProgress, setGeocodingProgress] = useState(null); // { done, total }
 
   const handleResetAll = () => {
@@ -129,6 +131,9 @@ function App() {
           <div className="app-logo">
             Mueller <span>Reports</span> Route Optimizer
           </div>
+          <span className="header-version" onClick={() => setShowChangelog(true)} title="View update log">
+            v{CURRENT_VERSION}
+          </span>
           <nav className="header-nav">
             <button
               className={`nav-tab ${activeView === 'planner' ? 'active' : ''}`}
@@ -259,6 +264,10 @@ function App() {
             </div>
           </div>
         </div>
+      )}
+
+      {showChangelog && (
+        <Changelog onClose={() => setShowChangelog(false)} />
       )}
     </div>
   );
