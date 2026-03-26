@@ -1,32 +1,35 @@
 :root {
-  --mr-red: #c8102e;
-  --mr-red-hover: #a00d24;
+  --mr-red: #C8102E;
+  --mr-red-hover: #A00D24;
   --mr-red-light: #fef2f2;
   --mr-dark: #292929;
-  --mr-gray-700: #313131;
-  --mr-gray-500: #6b7280;
+  --mr-charcoal: #262626;
+  --mr-gray-700: #374151;
+  --mr-gray-600: #4b5563;
+  --mr-gray-500: #77777A;
   --mr-gray-400: #9ca3af;
   --mr-gray-300: #d1d5db;
-  --mr-gray-200: #e3e3e3;
-  --mr-gray-100: #eeeeee;
+  --mr-gray-200: #E3E3E3;
+  --mr-gray-100: #F4F3F3;
+  --mr-gray-50: #f9fafb;
   --mr-white: #ffffff;
-  --mr-green: #16a34a;
-  --mr-green-light: #f0fdf4;
+  --mr-green: #1B8C3A;
+  --mr-green-light: #E8F5E9;
   --mr-blue: #2563eb;
   --mr-blue-light: #eff6ff;
-  --mr-orange: #ea580c;
-  --mr-orange-light: #fff7ed;
-  --mr-font-heading: 'Nixie One', cursive;
-  --mr-font-body: 'Raleway', sans-serif;
+  --mr-orange: #E68A00;
+  --mr-orange-light: #FFF8E1;
+  --mr-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   --mr-radius: 6px;
-  --mr-shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --mr-radius-lg: 10px;
+  --mr-shadow: 0 1px 4px rgba(0,0,0,0.06);
   --mr-shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
   font-size: 14px;
   color: var(--mr-dark);
   background: var(--mr-gray-100);
@@ -34,13 +37,13 @@ body {
 }
 
 h1, h2, h3, h4 {
-  font-family: var(--mr-font-heading);
+  font-family: var(--mr-font);
   color: var(--mr-dark);
   line-height: 1.3;
 }
 
 button {
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
   cursor: pointer;
   border: none;
   border-radius: var(--mr-radius);
@@ -51,7 +54,7 @@ button {
 }
 
 input, select, textarea {
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
   font-size: 13px;
   border: 1px solid var(--mr-gray-300);
   border-radius: var(--mr-radius);

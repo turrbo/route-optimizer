@@ -1,25 +1,28 @@
 .stop-panel {
   width: 360px;
   height: 100vh;
-  background-color: var(--mr-white);
+  background-color: var(--mr-gray-100);
   box-shadow: var(--mr-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
 }
 
 .stop-panel-section {
-  padding: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: var(--mr-white);
   border-bottom: 1px solid var(--mr-gray-200);
 }
 
 .section-title {
-  font-family: var(--mr-font-heading);
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-family: var(--mr-font);
+  font-size: 0.8125rem;
+  font-weight: 700;
   color: var(--mr-dark);
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.75rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 /* Add Stop Form */
@@ -49,7 +52,7 @@
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--mr-gray-300);
   border-radius: var(--mr-radius);
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
   font-size: 0.875rem;
   color: var(--mr-dark);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -117,7 +120,7 @@
   padding: 0.625rem 0.75rem;
   border: 1px solid var(--mr-gray-300);
   border-radius: var(--mr-radius);
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
   font-size: 0.875rem;
   color: var(--mr-dark);
   background-color: var(--mr-white);
@@ -135,7 +138,7 @@
   padding: 0.75rem 1.5rem;
   border: none;
   border-radius: var(--mr-radius);
-  font-family: var(--mr-font-body);
+  font-family: var(--mr-font);
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
@@ -255,6 +258,8 @@
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding: 1rem 1.25rem;
+  background: var(--mr-gray-100);
 }
 
 .empty-state {
@@ -273,13 +278,13 @@
 .stop-item {
   background-color: var(--mr-white);
   border: 1px solid var(--mr-gray-200);
-  border-radius: var(--mr-radius);
+  border-radius: var(--mr-radius-lg);
   margin-bottom: 0.75rem;
   transition: box-shadow 0.2s ease;
 }
 
 .stop-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--mr-shadow);
 }
 
 .stop-header {

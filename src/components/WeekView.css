@@ -16,10 +16,12 @@
 }
 
 .week-title {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--mr-dark);
   margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 .week-header-actions {
@@ -125,7 +127,7 @@
 /* Day Card */
 .day-card {
   background: var(--mr-white);
-  border-radius: var(--mr-radius);
+  border-radius: var(--mr-radius-lg);
   box-shadow: var(--mr-shadow);
   overflow: hidden;
   cursor: pointer;
@@ -165,9 +167,9 @@
 
 /* Day Card Header */
 .day-card-header {
-  background: var(--mr-dark);
+  background: var(--mr-charcoal);
   color: var(--mr-white);
-  padding: 1rem;
+  padding: 0.875rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -308,7 +310,7 @@
 /* Duplicate Warnings Panel */
 .duplicate-warnings-panel {
   background: var(--mr-white);
-  border-radius: var(--mr-radius);
+  border-radius: var(--mr-radius-lg);
   box-shadow: var(--mr-shadow);
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -318,10 +320,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--mr-dark);
   margin: 0 0 1rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .warnings-title svg {
@@ -391,7 +395,7 @@
 /* Missed Opportunities Panel */
 .missed-opportunities-panel {
   background: var(--mr-white);
-  border-radius: var(--mr-radius);
+  border-radius: var(--mr-radius-lg);
   box-shadow: var(--mr-shadow);
   padding: 1.5rem;
   margin-bottom: 2rem;
@@ -479,16 +483,18 @@
 /* Week Summary Section */
 .week-summary {
   background: var(--mr-white);
-  border-radius: var(--mr-radius);
+  border-radius: var(--mr-radius-lg);
   box-shadow: var(--mr-shadow);
   padding: 1.5rem;
 }
 
 .summary-title {
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--mr-dark);
   margin: 0 0 1.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .summary-stats-grid {
@@ -517,13 +523,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: var(--mr-white);
-  border-radius: calc(var(--mr-radius) / 2);
-  color: var(--mr-red);
+  width: 44px;
+  height: 44px;
+  background: var(--mr-red);
+  border-radius: 6px;
+  color: var(--mr-white);
   flex-shrink: 0;
-  box-shadow: var(--mr-shadow);
 }
 
 .stat-content {

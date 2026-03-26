@@ -134,7 +134,10 @@ function App() {
       <header className="app-header">
         <div className="header-left">
           <div className="app-logo">
-            Mueller <span>Reports</span> Route Optimizer
+            <div className="logo-icon">MR</div>
+            <div className="logo-text">
+              Mueller Reports <span>Route Optimizer</span>
+            </div>
           </div>
           <span className="header-version" onClick={() => setShowChangelog(true)} title="View update log">
             v{CURRENT_VERSION}

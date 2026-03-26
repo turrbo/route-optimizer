@@ -10,7 +10,7 @@
 
 .changelog-modal {
   background: var(--mr-white, #fff);
-  border-radius: 8px;
+  border-radius: var(--mr-radius-lg, 10px);
   width: 560px;
   max-width: 90vw;
   max-height: 80vh;
@@ -30,9 +30,11 @@
 
 .changelog-header h2 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--mr-dark, #292929);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .changelog-version {

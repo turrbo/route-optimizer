@@ -15,6 +15,7 @@ const CHANGELOG = [
       'Home address geocoding improved - failures no longer prevent retries on subsequent days',
       'Open Cases Excel data now persists when clicking New Rep (only cleared manually)',
       'Update Log and version number added to header',
+      'UI rebrand to match Mueller Reports Operations Dashboard (Segoe UI, charcoal header, red accent icons)',
     ],
   },
   {
