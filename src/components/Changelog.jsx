@@ -3,7 +3,7 @@ import './Changelog.css';
 
 const CHANGELOG = [
   {
-    version: '1.7.0',
+    version: '1.6.1',
     date: '2026-03-27',
     changes: [
       'Faster geocoding - providers run in round-robin with 3 cases processed concurrently',
@@ -126,7 +126,7 @@ const CHANGELOG = [
   },
 ];
 
-export const CURRENT_VERSION = '1.7.0';
+export const CURRENT_VERSION = '1.6.1';
 
 export default function Changelog({ onClose }) {
   return (
