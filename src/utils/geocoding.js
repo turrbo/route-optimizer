@@ -362,29 +362,33 @@ async function locationIQGeocode(address) {
 }
 
 // ---------------------------------------------------------------------------
-// Main geocoding function with fallback chain
+// Main geocoding function - races all providers in parallel for speed
 // ---------------------------------------------------------------------------
 
 export async function geocodeAddress(address) {
   const normalized = normalizeAddress(address);
 
-  // Each geocoder is wrapped individually so a failure in one
-  // never prevents the next from being tried.
+  // Race all providers in parallel - first successful result wins.
+  // Each provider is wrapped so a rejection doesn't cancel the race.
+  const wrap = (fn) => fn(normalized).then(r => r || Promise.reject('empty')).catch(() => Promise.reject('failed'));
 
-  // 1. Nominatim (free, primary)
-  try { const r = await nominatimGeocode(normalized); if (r) return r; } catch { /* fall through */ }
+  const providers = [
+    wrap(nominatimGeocode),
+    wrap(photonGeocode),
+    wrap(censusGeocode),
+  ];
 
-  // 2. Photon by Komoot (free, no key, separate infrastructure from Nominatim)
-  try { const r = await photonGeocode(normalized); if (r) return r; } catch { /* fall through */ }
+  // Add LocationIQ only if key is configured
+  if (LOCATIONIQ_KEY) {
+    providers.push(wrap(locationIQGeocode));
+  }
 
-  // 3. US Census Bureau (free, authoritative for US residential)
-  try { const r = await censusGeocode(normalized); if (r) return r; } catch { /* fall through */ }
-
-  // 4. LocationIQ (5K/day free, different data processing)
-  try { const r = await locationIQGeocode(normalized); if (r) return r; } catch { /* fall through */ }
-
-  // All failed
-  throw new Error(`Address not found: ${address}`);
+  try {
+    return await Promise.any(providers);
+  } catch {
+    // All providers failed
+    throw new Error(`Address not found: ${address}`);
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -9,6 +9,8 @@ import './OpenCasesPanel.css';
 const geocodeCache = {};
 let geocodeAbortController = null;
 
+const BATCH_CONCURRENCY = 3; // geocode 3 cases at a time
+
 async function geocodeCases(cases, geocodeCaseFn) {
   // Cancel any previous run
   if (geocodeAbortController) {
@@ -21,28 +23,40 @@ async function geocodeCases(cases, geocodeCaseFn) {
   await new Promise(r => setTimeout(r, 50));
   if (controller.signal.aborted) return;
 
-  for (const c of cases) {
-    if (controller.signal.aborted) return;
+  // Filter to only cases that need geocoding
+  const pending = cases.filter(c => {
+    if (c.lat && c.lng) return false;
     const key = `${c.address}, ${c.city}, ${c.state}`;
-
-    // Already geocoded in store
-    if (c.lat && c.lng) continue;
-
-    // Check cache (only successful results are cached)
     if (geocodeCache[key]) {
+      // Apply cached result immediately
       geocodeCaseFn(c.controlNumber, geocodeCache[key].lat, geocodeCache[key].lng);
-      continue;
+      return false;
     }
+    return true;
+  });
 
-    try {
-      const geo = await geocodeAddress(key);
-      // Only cache successful results
-      geocodeCache[key] = { lat: geo.lat, lng: geo.lng };
-      if (!controller.signal.aborted) {
-        geocodeCaseFn(c.controlNumber, geo.lat, geo.lng);
+  // Process in concurrent batches
+  for (let i = 0; i < pending.length; i += BATCH_CONCURRENCY) {
+    if (controller.signal.aborted) return;
+
+    const batch = pending.slice(i, i + BATCH_CONCURRENCY);
+    const results = await Promise.allSettled(
+      batch.map(async (c) => {
+        const key = `${c.address}, ${c.city}, ${c.state}`;
+        const geo = await geocodeAddress(key);
+        return { controlNumber: c.controlNumber, key, lat: geo.lat, lng: geo.lng };
+      })
+    );
+
+    if (controller.signal.aborted) return;
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        const { controlNumber, key, lat, lng } = result.value;
+        geocodeCache[key] = { lat, lng };
+        geocodeCaseFn(controlNumber, lat, lng);
       }
-    } catch {
-      // Don't cache failures - they'll be retried on the next run
+      // Failures are not cached - will retry on next run
     }
   }
 }
