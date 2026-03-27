@@ -63,6 +63,8 @@ export function parseOpenCasesExcel(arrayBuffer) {
       surveyType: surveyType.toString().trim(),
       dateOrdered: (row['Date Ordered'] || '').toString().trim(),
       dateOrderedParsed: parseDate(row['Date Ordered']),
+      dateAssigned: (row['Date Assigned'] || '').toString().trim(),
+      dateAssignedParsed: parseDate(row['Date Assigned']),
       frAssigned: frAssigned || null,
       customerName: (row['Customer Name #'] || '').toString().trim(),
       customerDueDate: (row['Customer Due Date'] || '').toString().trim(),
@@ -74,17 +76,16 @@ export function parseOpenCasesExcel(arrayBuffer) {
 }
 
 /**
- * Filter cases by route date and FR selection.
- * routeDate: YYYY-MM-DD string (cases must be ordered BEFORE this date)
- * selectedFR: string FR name to filter, or null for all
- * Returns { assignedCases, unassignedCases }
+ * Filter cases by route date using Date Assigned.
+ * routeDate: YYYY-MM-DD string (cases must be assigned BEFORE this date)
  */
 export function filterOpenCases(cases, routeDate) {
   const routeDateObj = parseISODate(routeDate);
 
   return cases.filter(c => {
-    if (!c.dateOrderedParsed) return true; // include if no date
-    // Date ordered must be on or before the route date
-    return c.dateOrderedParsed <= routeDateObj;
+    // Use Date Assigned if available, fall back to Date Ordered
+    const dateToCheck = c.dateAssignedParsed || c.dateOrderedParsed;
+    if (!dateToCheck) return true; // include if no date
+    return dateToCheck <= routeDateObj;
   });
 }

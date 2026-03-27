@@ -169,8 +169,30 @@ export const WeekView = () => {
   }, [weekDays, stopsByDay, routes, duplicateWarnings]);
 
   // Find missed opportunities: open cases near the route that could have been added
+  // Cross-references against route stops so completed cases don't show on later days
   const missedOpportunities = useMemo(() => {
     if (openCases.length === 0) return [];
+
+    // Build maps for cross-referencing: by case number AND by normalized address
+    const completedByCase = {};
+    const completedByAddress = {};
+    stops.forEach(s => {
+      if (s.dayDate) {
+        // Track by case number
+        if (s.caseNumber) {
+          if (!completedByCase[s.caseNumber] || s.dayDate < completedByCase[s.caseNumber]) {
+            completedByCase[s.caseNumber] = s.dayDate;
+          }
+        }
+        // Track by normalized address as fallback
+        if (s.address) {
+          const normAddr = s.address.toUpperCase().trim();
+          if (!completedByAddress[normAddr] || s.dayDate < completedByAddress[normAddr]) {
+            completedByAddress[normAddr] = s.dayDate;
+          }
+        }
+      }
+    });
 
     const opportunities = [];
 
@@ -184,9 +206,13 @@ export const WeekView = () => {
 
       // Get assigned exterior cases near any stop (only for the selected FR)
       const nearbyCases = availableCases.filter(c => {
-        // Skip cases that are already in the route as stops
-        const alreadyInRoute = stops.some(s => s.caseNumber === c.controlNumber);
-        if (alreadyInRoute) return false;
+        // Skip cases completed on this day or earlier (by case # or address)
+        const completedByNum = completedByCase[c.controlNumber];
+        if (completedByNum && completedByNum <= day.date) return false;
+
+        const normCaseAddr = `${c.address}, ${c.city}`.toUpperCase().trim();
+        const completedByAddr = completedByAddress[normCaseAddr];
+        if (completedByAddr && completedByAddr <= day.date) return false;
 
         // Only show cases assigned to the selected FR (skip unassigned)
         if (!c.frAssigned || c.frAssigned !== selectedFR) return false;
@@ -503,7 +529,7 @@ export const WeekView = () => {
                         <div className="opportunity-case-info">
                           <span className="opportunity-case-addr">{c.address}, {c.city}</span>
                           <span className="opportunity-case-meta">
-                            #{c.controlNumber} - {c.surveyType}
+                            #{c.controlNumber} - {c.surveyType} <span className="opportunity-assigned-badge">(Assigned)</span>
                           </span>
                         </div>
                       </div>
