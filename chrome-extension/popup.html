@@ -15,74 +15,103 @@
       width: 420px;
       min-height: 440px;
       max-height: 600px;
-      font-family: 'Raleway', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
       color: #292929;
-      background: #ffffff;
+      background: #F4F3F3;
       overflow: hidden;
     }
 
+    /* Header - Charcoal with MR logo */
     .header {
-      background: #c8102e;
+      background: #262626;
       color: white;
-      padding: 14px 20px;
+      padding: 0 20px;
+      height: 56px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
 
-    .header-title h1 {
-      font-size: 16px;
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 34px;
+      height: 34px;
+      background: #C8102E;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      line-height: 1.3;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .logo-text span {
+      color: #C8102E;
       font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    .header-title p {
+      display: block;
       font-size: 11px;
-      opacity: 0.9;
-      margin-top: 2px;
     }
 
     .header-badge {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.12);
       color: white;
       padding: 4px 10px;
-      border-radius: 12px;
+      border-radius: 10px;
       font-size: 11px;
       font-weight: 600;
+      letter-spacing: 0.3px;
     }
 
     /* Tabs */
     .tabs {
       display: flex;
-      background: #f5f5f5;
-      border-bottom: 1px solid #e0e0e0;
+      background: #ffffff;
+      border-bottom: 1px solid #E3E3E3;
     }
 
     .tab {
       flex: 1;
       padding: 10px 8px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: 10px;
+      font-weight: 700;
       text-align: center;
       cursor: pointer;
       border: none;
       background: transparent;
-      color: #666;
+      color: #77777A;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.8px;
       transition: all 0.2s;
       border-bottom: 2px solid transparent;
+      font-family: inherit;
     }
 
     .tab:hover {
       color: #292929;
-      background: #eee;
+      background: #f9fafb;
     }
 
     .tab.active {
-      color: #c8102e;
-      border-bottom-color: #c8102e;
+      color: #C8102E;
+      border-bottom-color: #C8102E;
       background: white;
     }
 
@@ -92,6 +121,7 @@
       padding: 16px 20px;
       max-height: 460px;
       overflow-y: auto;
+      background: #F4F3F3;
     }
 
     .tab-content.active {
@@ -100,24 +130,24 @@
 
     /* --- Excel Import Tab --- */
     .upload-zone {
-      border: 2px dashed #ddd;
-      border-radius: 6px;
+      border: 2px dashed #d1d5db;
+      border-radius: 10px;
       padding: 24px 16px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
       margin-bottom: 12px;
-      background: #fafafa;
+      background: #ffffff;
     }
 
     .upload-zone:hover {
-      border-color: #c8102e;
-      background: #fff5f5;
+      border-color: #C8102E;
+      background: #fef2f2;
     }
 
     .upload-zone.dragging {
-      border-color: #c8102e;
-      background: #fff5f5;
+      border-color: #C8102E;
+      background: #fef2f2;
     }
 
     .upload-icon {
@@ -128,12 +158,12 @@
 
     .upload-text {
       font-size: 13px;
-      color: #666;
+      color: #77777A;
       line-height: 1.5;
     }
 
     .upload-text strong {
-      color: #c8102e;
+      color: #C8102E;
     }
 
     .file-input {
@@ -142,9 +172,9 @@
 
     .file-info {
       display: none;
-      background: #f0fdf4;
+      background: #E8F5E9;
       border: 1px solid #bbf7d0;
-      border-radius: 4px;
+      border-radius: 10px;
       padding: 10px 12px;
       margin-bottom: 12px;
       font-size: 12px;
@@ -158,7 +188,7 @@
 
     .file-name {
       font-weight: 600;
-      color: #166534;
+      color: #1B8C3A;
     }
 
     .file-remove {
@@ -167,6 +197,7 @@
       color: #999;
       cursor: pointer;
       font-size: 16px;
+      font-family: inherit;
     }
 
     /* Import Preview */
@@ -189,10 +220,11 @@
     .summary-card {
       flex: 1;
       min-width: 80px;
-      background: #f5f5f5;
-      border-radius: 4px;
+      background: #ffffff;
+      border-radius: 10px;
       padding: 8px 10px;
       text-align: center;
+      border: 1px solid #E3E3E3;
     }
 
     .summary-card .num {
@@ -202,19 +234,20 @@
     }
 
     .summary-card .label {
-      font-size: 10px;
-      color: #666;
+      font-size: 9px;
+      color: #77777A;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.8px;
+      font-weight: 600;
     }
 
     .summary-card.flagged {
-      background: #fff7ed;
-      border: 1px solid #fed7aa;
+      background: #FFF8E1;
+      border-color: #E68A00;
     }
 
     .summary-card.flagged .num {
-      color: #ea580c;
+      color: #E68A00;
     }
 
     .import-day-group {
@@ -222,14 +255,16 @@
     }
 
     .import-day-header {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #c8102e;
-      padding: 6px 0 4px 0;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 4px;
+      letter-spacing: 0.8px;
+      color: #262626;
+      padding: 8px 10px;
+      background: #262626;
+      color: white;
+      border-radius: 6px 6px 0 0;
+      margin-bottom: 0;
       display: flex;
       justify-content: space-between;
     }
@@ -237,23 +272,29 @@
     .import-day-header .home-label {
       font-weight: 400;
       font-size: 10px;
-      color: #2563eb;
+      color: rgba(255,255,255,0.7);
     }
 
     .import-item {
       display: flex;
       align-items: flex-start;
       gap: 8px;
-      padding: 6px 8px;
+      padding: 8px 10px;
       font-size: 11px;
-      border-radius: 3px;
-      margin-bottom: 3px;
-      border: 1px solid #e8e8e8;
+      border-radius: 0;
+      margin-bottom: 0;
+      border: 1px solid #E3E3E3;
+      border-top: none;
+      background: #ffffff;
+    }
+
+    .import-item:last-child {
+      border-radius: 0 0 10px 10px;
     }
 
     .import-item.flagged {
-      border-color: #fed7aa;
-      background: #fff7ed;
+      border-color: #E68A00;
+      background: #FFF8E1;
     }
 
     .import-item .case-num {
@@ -266,8 +307,8 @@
       display: inline-block;
       font-size: 9px;
       font-weight: 600;
-      padding: 1px 5px;
-      border-radius: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
       background: #dbeafe;
       color: #1e40af;
     }
@@ -276,21 +317,21 @@
       display: inline-block;
       font-size: 9px;
       font-weight: 600;
-      padding: 1px 5px;
-      border-radius: 3px;
+      padding: 2px 6px;
+      border-radius: 4px;
       background: #fee2e2;
       color: #dc2626;
     }
 
     .import-item .mileage-ok {
-      background: #dcfce7;
-      color: #166534;
+      background: #E8F5E9;
+      color: #1B8C3A;
     }
 
     .import-item .address-found {
       display: block;
       font-size: 10px;
-      color: #16a34a;
+      color: #1B8C3A;
       margin-top: 2px;
       word-wrap: break-word;
       line-height: 1.3;
@@ -325,28 +366,32 @@
       padding: 4px 6px;
       font-size: 10px;
       border: 1px solid #d1d5db;
-      border-radius: 4px;
+      border-radius: 6px;
       margin-top: 3px;
+      font-family: inherit;
     }
 
     .manual-address-input:focus {
       outline: none;
-      border-color: #c8102e;
+      border-color: #C8102E;
+      box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.1);
     }
 
     .manual-address-save {
       margin-top: 3px;
-      padding: 2px 8px;
+      padding: 3px 10px;
       font-size: 10px;
-      background: #c8102e;
+      background: #C8102E;
       color: white;
       border: none;
-      border-radius: 3px;
+      border-radius: 6px;
       cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
     }
 
     .manual-address-save:hover {
-      background: #a10d24;
+      background: #A00D24;
     }
 
     .import-item .item-details {
@@ -361,17 +406,17 @@
 
     .case-input-section label {
       display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #292929;
+      font-size: 11px;
+      font-weight: 700;
+      color: #262626;
       margin-bottom: 6px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
     .case-input-section p {
       font-size: 11px;
-      color: #999;
+      color: #77777A;
       margin-bottom: 8px;
     }
 
@@ -379,48 +424,50 @@
       width: 100%;
       height: 90px;
       padding: 10px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
       font-size: 13px;
       font-family: 'Courier New', monospace;
       resize: vertical;
       line-height: 1.6;
+      background: #ffffff;
     }
 
     textarea:focus {
       outline: none;
-      border-color: #c8102e;
+      border-color: #C8102E;
+      box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.1);
     }
 
     .btn {
       padding: 10px 16px;
       border: none;
-      border-radius: 4px;
-      font-size: 13px;
-      font-weight: 600;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease;
       font-family: inherit;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
     }
 
     .btn-primary {
-      background: #c8102e;
+      background: #C8102E;
       color: white;
     }
 
     .btn-primary:hover {
-      background: #a00d25;
+      background: #A00D24;
     }
 
     .btn-primary:disabled {
-      background: #ccc;
+      background: #d1d5db;
       cursor: not-allowed;
     }
 
     .btn-secondary {
-      background: #292929;
+      background: #262626;
       color: white;
     }
 
@@ -435,12 +482,13 @@
 
     .btn-outline {
       background: white;
-      color: #292929;
-      border: 1px solid #ddd;
+      color: #262626;
+      border: 1px solid #d1d5db;
     }
 
     .btn-outline:hover {
-      background: #f5f5f5;
+      background: #f9fafb;
+      border-color: #262626;
     }
 
     .btn-block {
@@ -450,7 +498,7 @@
 
     .btn-small {
       padding: 6px 10px;
-      font-size: 11px;
+      font-size: 10px;
     }
 
     /* Progress Bar */
@@ -466,30 +514,33 @@
     .progress-label {
       display: flex;
       justify-content: space-between;
-      font-size: 12px;
-      color: #666;
+      font-size: 11px;
+      color: #77777A;
       margin-bottom: 6px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .progress-bar {
       width: 100%;
-      height: 8px;
-      background: #e0e0e0;
-      border-radius: 4px;
+      height: 6px;
+      background: #E3E3E3;
+      border-radius: 3px;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
-      background: #c8102e;
-      border-radius: 4px;
+      background: #C8102E;
+      border-radius: 3px;
       transition: width 0.3s ease;
       width: 0%;
     }
 
     .progress-status {
       font-size: 11px;
-      color: #999;
+      color: #77777A;
       margin-top: 6px;
     }
 
@@ -499,11 +550,11 @@
     }
 
     .results-title {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #292929;
+      letter-spacing: 0.8px;
+      color: #262626;
       margin-bottom: 8px;
     }
 
@@ -512,14 +563,15 @@
       align-items: flex-start;
       gap: 10px;
       padding: 10px 12px;
-      border-radius: 4px;
+      border-radius: 10px;
       margin-bottom: 6px;
       font-size: 12px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid #E3E3E3;
+      background: #ffffff;
     }
 
     .result-item.success {
-      background: #f0fdf4;
+      background: #E8F5E9;
       border-color: #bbf7d0;
     }
 
@@ -545,7 +597,7 @@
     }
 
     .result-address {
-      color: #16a34a;
+      color: #1B8C3A;
       margin-top: 2px;
       word-wrap: break-word;
     }
@@ -564,12 +616,14 @@
 
     .result-tag, .stop-tag {
       display: inline-block;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 600;
       padding: 2px 6px;
-      border-radius: 3px;
-      background: #e0e0e0;
+      border-radius: 4px;
+      background: #E3E3E3;
       color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .type-tag {
@@ -578,8 +632,8 @@
     }
 
     .date-tag {
-      background: #dcfce7;
-      color: #166534;
+      background: #E8F5E9;
+      color: #1B8C3A;
     }
 
     .result-raw-type {
@@ -598,13 +652,14 @@
     }
 
     .stop-day-header {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #c8102e;
-      padding: 8px 0 4px 0;
-      border-bottom: 1px solid #e0e0e0;
+      letter-spacing: 0.8px;
+      color: white;
+      padding: 8px 10px;
+      background: #262626;
+      border-radius: 6px;
       margin-bottom: 6px;
     }
 
@@ -616,10 +671,11 @@
       font-size: 16px;
       padding: 0 2px;
       line-height: 1;
+      font-family: inherit;
     }
 
     .result-remove:hover {
-      color: #c8102e;
+      color: #C8102E;
     }
 
     /* Stops Tab */
@@ -634,14 +690,14 @@
       align-items: flex-start;
       gap: 10px;
       padding: 10px 12px;
-      background: #f9f9f9;
-      border: 1px solid #e0e0e0;
-      border-radius: 4px;
+      background: #ffffff;
+      border: 1px solid #E3E3E3;
+      border-radius: 10px;
       margin-bottom: 6px;
     }
 
     .stop-item:hover {
-      border-color: #c8102e;
+      border-color: #C8102E;
     }
 
     .stop-item.home-stop {
@@ -650,20 +706,20 @@
     }
 
     .stop-item.flagged-stop {
-      border-left: 3px solid #ea580c;
+      border-left: 3px solid #E68A00;
     }
 
     .stop-number {
       min-width: 22px;
       height: 22px;
-      background: #c8102e;
+      background: #C8102E;
       color: white;
-      border-radius: 50%;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       flex-shrink: 0;
     }
 
@@ -685,7 +741,7 @@
 
     .stop-case {
       font-size: 11px;
-      color: #666;
+      color: #77777A;
       margin-top: 2px;
     }
 
@@ -697,16 +753,17 @@
       font-size: 16px;
       padding: 0 4px;
       line-height: 1;
+      font-family: inherit;
     }
 
     .stop-remove:hover {
-      color: #c8102e;
+      color: #C8102E;
     }
 
     .empty-state {
       text-align: center;
       padding: 30px 20px;
-      color: #999;
+      color: #77777A;
     }
 
     .empty-state-text {
@@ -729,20 +786,22 @@
     .input-field {
       flex: 1;
       padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
       font-size: 13px;
       font-family: inherit;
+      background: #ffffff;
     }
 
     .input-field:focus {
       outline: none;
-      border-color: #c8102e;
+      border-color: #C8102E;
+      box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.1);
     }
 
     /* Settings */
     .settings-section {
-      border-top: 1px solid #e0e0e0;
+      border-top: 1px solid #E3E3E3;
       padding-top: 12px;
       margin-top: 12px;
     }
@@ -756,14 +815,16 @@
     }
 
     .settings-toggle-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: #292929;
+      font-size: 11px;
+      font-weight: 700;
+      color: #262626;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
     }
 
     .settings-toggle-icon {
       font-size: 11px;
-      color: #999;
+      color: #77777A;
       transition: transform 0.2s;
     }
 
@@ -788,16 +849,18 @@
 
     .settings-label {
       display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: #292929;
+      font-size: 10px;
+      font-weight: 700;
+      color: #262626;
       margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
     }
 
     .login-notice {
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 4px;
+      background: #FFF8E1;
+      border: 1px solid #E68A00;
+      border-radius: 10px;
       padding: 10px 12px;
       font-size: 11px;
       color: #92400e;
@@ -818,21 +881,24 @@
 
     .tab-content::-webkit-scrollbar-track,
     .stops-list::-webkit-scrollbar-track {
-      background: #f1f1f1;
+      background: #E3E3E3;
     }
 
     .tab-content::-webkit-scrollbar-thumb,
     .stops-list::-webkit-scrollbar-thumb {
-      background: #c8102e;
+      background: #C8102E;
       border-radius: 3px;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <div class="header-title">
-      <h1>Mueller Reports</h1>
-      <p>Route Optimizer</p>
+    <div class="header-left">
+      <div class="logo-icon">MR</div>
+      <div class="logo-text">
+        Mueller Reports
+        <span>Route Optimizer</span>
+      </div>
     </div>
     <span id="countBadge" class="header-badge" style="display: none;">0 stops</span>
   </div>

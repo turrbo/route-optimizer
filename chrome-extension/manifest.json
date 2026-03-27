@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Mueller Reports Route Optimizer",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Import Excel mileage reports, look up case addresses, and send to Route Optimizer",
   "permissions": [
     "contextMenus",
