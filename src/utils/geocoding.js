@@ -362,33 +362,33 @@ async function locationIQGeocode(address) {
 }
 
 // ---------------------------------------------------------------------------
-// Main geocoding function - races all providers in parallel for speed
+// Main geocoding function - tries a primary provider then falls back to others
 // ---------------------------------------------------------------------------
+
+// Round-robin counter so batch calls spread load across providers
+let rrIndex = 0;
+const GEOCODE_PROVIDERS = [photonGeocode, censusGeocode, nominatimGeocode];
 
 export async function geocodeAddress(address) {
   const normalized = normalizeAddress(address);
 
-  // Race all providers in parallel - first successful result wins.
-  // Each provider is wrapped so a rejection doesn't cancel the race.
-  const wrap = (fn) => fn(normalized).then(r => r || Promise.reject('empty')).catch(() => Promise.reject('failed'));
+  // Pick a primary provider via round-robin, then try the others as fallbacks
+  const startIdx = rrIndex++ % GEOCODE_PROVIDERS.length;
 
-  const providers = [
-    wrap(nominatimGeocode),
-    wrap(photonGeocode),
-    wrap(censusGeocode),
-  ];
+  for (let i = 0; i < GEOCODE_PROVIDERS.length; i++) {
+    const provider = GEOCODE_PROVIDERS[(startIdx + i) % GEOCODE_PROVIDERS.length];
+    try {
+      const r = await provider(normalized);
+      if (r) return r;
+    } catch { /* try next */ }
+  }
 
-  // Add LocationIQ only if key is configured
+  // LocationIQ last resort
   if (LOCATIONIQ_KEY) {
-    providers.push(wrap(locationIQGeocode));
+    try { const r = await locationIQGeocode(normalized); if (r) return r; } catch { /* fall through */ }
   }
 
-  try {
-    return await Promise.any(providers);
-  } catch {
-    // All providers failed
-    throw new Error(`Address not found: ${address}`);
-  }
+  throw new Error(`Address not found: ${address}`);
 }
 
 // ---------------------------------------------------------------------------
