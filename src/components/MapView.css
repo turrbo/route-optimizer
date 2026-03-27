@@ -200,6 +200,19 @@
   color: var(--mr-red, #c8102e);
 }
 
+/* Fix tile seam lines (gap between map tiles) */
+.leaflet-tile {
+  image-rendering: -webkit-optimize-contrast;
+}
+
+.leaflet-tile-container {
+  will-change: transform;
+}
+
+.leaflet-container .leaflet-tile-pane img {
+  outline: 1px solid transparent;
+}
+
 /* Dark mode overrides for Leaflet elements */
 [data-theme="dark"] .leaflet-popup-content-wrapper {
   background: var(--mr-gray-50);

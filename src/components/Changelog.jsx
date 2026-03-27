@@ -9,6 +9,8 @@ const CHANGELOG = [
       'Dark mode toggle - click the moon icon in the header to switch themes',
       'Map tiles switch to CartoDB dark basemap in dark mode',
       'Dark mode preference persists across sessions',
+      'Fixed dark mode text readability across all buttons, header, and panels',
+      'Fixed map tile seam lines in dark mode',
       'Removed Sunday from Week View (Mon-Sat only)',
       'Distance now always shown in miles (was feet for short distances)',
       'Fixed FR selector dropdown readability in Open Cases bar',

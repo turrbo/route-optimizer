@@ -50,7 +50,7 @@
 
 .oc-upload-btn-small:hover {
   background: rgba(255,255,255,0.2);
-  color: var(--mr-white);
+  color: #fff;
 }
 
 /* Counts */
@@ -92,7 +92,7 @@
   border-radius: 4px;
   font-size: 12px;
   background: var(--mr-charcoal, #262626);
-  color: var(--mr-white);
+  color: #fff;
   max-width: 200px;
 }
 
@@ -145,7 +145,7 @@
 
 .oc-bar-list-btn:hover {
   background: rgba(255,255,255,0.2);
-  color: var(--mr-white);
+  color: #fff;
 }
 
 /* Clear button */

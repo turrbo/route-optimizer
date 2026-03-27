@@ -96,7 +96,7 @@
 
 .week-today-btn {
   background: var(--mr-red);
-  color: var(--mr-white);
+  color: #fff;
   border-color: var(--mr-red);
 }
 
@@ -163,7 +163,7 @@
 /* Day Card Header */
 .day-card-header {
   background: var(--mr-charcoal);
-  color: var(--mr-white);
+  color: #fff;
   padding: 0.875rem 1rem;
   display: flex;
   justify-content: space-between;
@@ -522,7 +522,7 @@
   height: 44px;
   background: var(--mr-red);
   border-radius: 6px;
-  color: var(--mr-white);
+  color: #fff;
   flex-shrink: 0;
 }
 
