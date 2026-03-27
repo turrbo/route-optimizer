@@ -119,6 +119,25 @@
   box-shadow: none;
 }
 
+.dark-mode-btn {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 6px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.dark-mode-btn:hover {
+  background: rgba(255,255,255,0.15);
+  color: var(--mr-white);
+  border-color: rgba(255,255,255,0.3);
+}
+
 .settings-btn {
   background: rgba(255,255,255,0.08);
   color: rgba(255,255,255,0.7);
@@ -264,7 +283,7 @@
 }
 
 .btn-danger:hover {
-  background: #a00d25;
+  background: var(--mr-red-hover);
 }
 
 .reset-modal {

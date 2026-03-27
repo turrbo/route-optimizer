@@ -124,6 +124,7 @@ const MapView = () => {
   const selectedFR = useRouteStore((state) => state.selectedFR);
   const showOpenCases = useRouteStore((state) => state.showOpenCases);
   const showUnassigned = useRouteStore((state) => state.showUnassigned);
+  const darkMode = useRouteStore((state) => state.darkMode);
   const allStops = useRouteStore((state) => state.stops);
 
   // Get stops for the active day (allStops in deps ensures re-computation on add/remove)
@@ -235,8 +236,15 @@ const MapView = () => {
         zoomControl={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={darkMode ? 'dark' : 'light'}
+          attribution={darkMode
+            ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
+            : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }
+          url={darkMode
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          }
         />
 
         <MapController stops={stops} />

@@ -39,7 +39,7 @@
 }
 
 .oc-upload-btn:hover {
-  background: #a00d24;
+  background: var(--mr-red-hover);
 }
 
 .oc-upload-btn-small {
@@ -72,7 +72,7 @@
 }
 
 .oc-dot-green {
-  background: #16a34a;
+  background: var(--mr-green);
 }
 
 .oc-dot-blue {
@@ -169,8 +169,8 @@
   right: 0;
   max-height: 400px;
   overflow-y: auto;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--mr-white);
+  border: 1px solid var(--mr-gray-200);
   border-top: none;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   z-index: 500;
@@ -190,18 +190,18 @@
 }
 
 .oc-group-unassigned {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--mr-green-light);
+  color: var(--mr-green);
 }
 
 .oc-group-assigned {
-  background: #e0f2fe;
-  color: #0c4a6e;
+  background: var(--mr-blue-light);
+  color: var(--mr-blue);
 }
 
 .oc-case-item {
   padding: 5px 8px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--mr-gray-200);
   font-size: 12px;
 }
 
@@ -218,7 +218,7 @@
 .oc-case-meta {
   display: flex;
   gap: 8px;
-  color: #9ca3af;
+  color: var(--mr-gray-400);
   font-size: 11px;
   flex-wrap: wrap;
 }
@@ -226,6 +226,6 @@
 .oc-empty {
   padding: 12px;
   text-align: center;
-  color: #9ca3af;
+  color: var(--mr-gray-400);
   font-size: 13px;
 }

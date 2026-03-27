@@ -157,7 +157,7 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #a00d25;
+  background-color: var(--mr-red-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(200, 16, 46, 0.2);
 }
@@ -167,12 +167,12 @@
 }
 
 .btn-optimize {
-  background-color: #16a34a;
+  background-color: var(--mr-green);
   color: var(--mr-white);
 }
 
 .btn-optimize:hover:not(:disabled) {
-  background-color: #15803d;
+  background-color: var(--mr-green);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(22, 163, 74, 0.2);
 }
@@ -192,7 +192,7 @@
 }
 
 .btn-toggle.active:hover:not(:disabled) {
-  background-color: #1a1a1a;
+  background-color: var(--mr-charcoal);
 }
 
 .btn-secondary {
@@ -232,7 +232,7 @@
 }
 
 .icon-btn.remove-btn:hover:not(:disabled) {
-  color: #a00d25;
+  color: var(--mr-red-hover);
 }
 
 .icon-btn.edit-btn:hover:not(:disabled) {
@@ -245,11 +245,11 @@
 }
 
 .icon-btn.geocode-btn:hover:not(:disabled) {
-  color: #2563eb;
+  color: var(--mr-blue);
 }
 
 .icon-btn.geocode-btn.needs-geocode {
-  color: #ea580c;
+  color: var(--mr-orange);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
@@ -437,7 +437,7 @@
 .stat-savings {
   margin-top: 0.375rem;
   font-size: 0.75rem;
-  color: #16a34a;
+  color: var(--mr-green);
   font-weight: 600;
 }
 
@@ -508,8 +508,8 @@
 
 /* Geocoding indicator */
 .stop-item.geocoding {
-  border-color: #93c5fd;
-  background-color: #eff6ff;
+  border-color: var(--mr-blue);
+  background-color: var(--mr-blue-light);
 }
 
 .geocoding-dot {
@@ -517,7 +517,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2563eb;
+  background: var(--mr-blue);
   margin-right: 6px;
   animation: pulse 1.2s ease-in-out infinite;
   vertical-align: middle;
@@ -530,24 +530,24 @@
 
 /* Home address marker */
 .stop-marker.home {
-  background-color: #2563eb;
+  background-color: var(--mr-blue);
 }
 
 .stop-item.home-address {
-  border-color: #93c5fd;
+  border-color: var(--mr-blue);
 }
 
 .meta-badge.home-badge {
-  background-color: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
+  background-color: var(--mr-blue-light);
+  color: var(--mr-blue);
 }
 
 /* Mileage flag */
 .stop-item.mileage-flag {
-  border-left: 3px solid #ea580c;
+  border-left: 3px solid var(--mr-orange);
 }
 
 .meta-badge.mileage-over {
-  background-color: rgba(234, 88, 12, 0.1);
-  color: #ea580c;
+  background-color: var(--mr-orange-light);
+  color: var(--mr-orange);
 }

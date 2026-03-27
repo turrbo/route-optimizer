@@ -26,6 +26,40 @@
   --mr-shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
 }
 
+/* Dark Mode Overrides */
+[data-theme="dark"] {
+  --mr-red: #e04050;
+  --mr-red-hover: #c8102e;
+  --mr-red-light: #3a1a1e;
+  --mr-dark: #e5e7eb;
+  --mr-charcoal: #1a1a1e;
+  --mr-gray-700: #c8cad0;
+  --mr-gray-600: #a0a4ab;
+  --mr-gray-500: #8a8d94;
+  --mr-gray-400: #6b6f76;
+  --mr-gray-300: #4a4a50;
+  --mr-gray-200: #3a3a40;
+  --mr-gray-100: #222226;
+  --mr-gray-50: #2a2a2e;
+  --mr-white: #2e2e34;
+  --mr-green: #34d058;
+  --mr-green-light: #1a2e1e;
+  --mr-blue: #58a6ff;
+  --mr-blue-light: #1a2030;
+  --mr-orange: #f0a030;
+  --mr-orange-light: #302818;
+  --mr-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  --mr-shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+  color-scheme: dark;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--mr-gray-50);
+  color: var(--mr-dark);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {

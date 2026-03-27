@@ -51,12 +51,12 @@
   color: var(--mr-dark, #292929);
   margin-bottom: 8px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--mr-gray-200);
 }
 
 .popup-field {
   font-size: 13px;
-  color: #4b5563;
+  color: var(--mr-gray-600);
   margin: 4px 0;
   line-height: 1.5;
 }
@@ -72,8 +72,8 @@
   width: 100%;
   margin-top: 8px;
   padding: 6px 12px;
-  background: #c8102e;
-  color: white;
+  background: var(--mr-red);
+  color: #fff;
   border: none;
   border-radius: 4px;
   font-size: 12px;
@@ -83,7 +83,7 @@
 }
 
 .popup-add-btn:hover {
-  background: #a10d24;
+  background: var(--mr-red-hover);
 }
 
 /* Override Leaflet default styles */
@@ -102,7 +102,7 @@
 
 /* Home marker (blue instead of red) */
 .marker-home {
-  background-color: #2563eb !important;
+  background-color: var(--mr-blue) !important;
 }
 
 /* Open case dot markers */
@@ -198,4 +198,25 @@
 
 .leaflet-control-attribution a {
   color: var(--mr-red, #c8102e);
+}
+
+/* Dark mode overrides for Leaflet elements */
+[data-theme="dark"] .leaflet-popup-content-wrapper {
+  background: var(--mr-gray-50);
+  color: var(--mr-dark);
+}
+
+[data-theme="dark"] .leaflet-popup-tip {
+  background: var(--mr-gray-50);
+}
+
+[data-theme="dark"] .leaflet-control-zoom a {
+  background-color: var(--mr-gray-50) !important;
+  color: var(--mr-dark) !important;
+  border-color: var(--mr-gray-300) !important;
+}
+
+[data-theme="dark"] .leaflet-control-attribution {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--mr-gray-500);
 }

@@ -158,6 +158,18 @@ const useRouteStore = create(
       // Settings panel
       showSettings: false,
       setShowSettings: (show) => set({ showSettings: show }),
+
+      // Dark mode
+      darkMode: false,
+      toggleDarkMode: () => set((state) => {
+        const next = !state.darkMode;
+        document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+        return { darkMode: next };
+      }),
+      initTheme: () => {
+        const isDark = get().darkMode;
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      },
     }),
     {
       name: 'mueller-route-optimizer',
@@ -169,6 +181,7 @@ const useRouteStore = create(
         openCases: state.openCases,
         openCasesFRNames: state.openCasesFRNames,
         selectedFR: state.selectedFR,
+        darkMode: state.darkMode,
       }),
     }
   )

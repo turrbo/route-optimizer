@@ -101,8 +101,8 @@
 }
 
 .week-today-btn:hover {
-  background: #a50d25;
-  border-color: #a50d25;
+  background: var(--mr-red-hover);
+  border-color: var(--mr-red-hover);
 }
 
 /* Week Grid - 6 cards (Mon-Sat) in a single row */
@@ -397,7 +397,7 @@
 }
 
 .missed-opportunities-panel .warnings-title svg {
-  color: #2563eb;
+  color: var(--mr-blue);
 }
 
 .opportunities-subtitle {
@@ -415,7 +415,7 @@
 
 .opportunity-day {
   border: 1px solid rgba(37, 99, 235, 0.15);
-  border-left: 4px solid #2563eb;
+  border-left: 4px solid var(--mr-blue);
   border-radius: var(--mr-radius);
   overflow: hidden;
 }
@@ -437,8 +437,8 @@
 .opportunity-count {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.1);
+  color: var(--mr-blue);
+  background: var(--mr-blue-light);
   padding: 2px 8px;
   border-radius: 10px;
 }
@@ -471,7 +471,7 @@
 }
 
 .opp-unassigned {
-  color: #16a34a;
+  color: var(--mr-green);
   font-weight: 600;
 }
 

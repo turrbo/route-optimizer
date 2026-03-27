@@ -3,6 +3,18 @@ import './Changelog.css';
 
 const CHANGELOG = [
   {
+    version: '1.6.0',
+    date: '2026-03-27',
+    changes: [
+      'Dark mode toggle - click the moon icon in the header to switch themes',
+      'Map tiles switch to CartoDB dark basemap in dark mode',
+      'Dark mode preference persists across sessions',
+      'Removed Sunday from Week View (Mon-Sat only)',
+      'Distance now always shown in miles (was feet for short distances)',
+      'Fixed FR selector dropdown readability in Open Cases bar',
+    ],
+  },
+  {
     version: '1.5.0',
     date: '2026-03-26',
     changes: [
@@ -99,7 +111,7 @@ const CHANGELOG = [
   },
 ];
 
-export const CURRENT_VERSION = '1.5.0';
+export const CURRENT_VERSION = '1.6.0';
 
 export default function Changelog({ onClose }) {
   return (
