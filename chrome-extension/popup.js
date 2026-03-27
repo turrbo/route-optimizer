@@ -1,6 +1,60 @@
 // Popup logic for Mueller Reports Route Optimizer v4
 // Excel import, Case # lookup, home address detection, mileage flagging
 
+// --- Extension Changelog ---
+const EXT_VERSION = '3.2.0';
+const EXT_CHANGELOG = [
+  {
+    version: '3.2.0',
+    date: '2026-03-27',
+    changes: [
+      'Added version badge and update log to extension popup',
+      'UI branding aligned with Route Optimizer web app (charcoal header, red accents, Segoe UI)',
+    ],
+  },
+  {
+    version: '3.1.0',
+    date: '2026-03-23',
+    changes: [
+      'Excel import persists state when popup closes during lookup',
+      'Background service worker retries timed-out cases automatically',
+      'Manual address input for failed lookups in Excel import',
+      'Progress updates via storage for cross-popup continuity',
+    ],
+  },
+  {
+    version: '3.0.0',
+    date: '2026-03-21',
+    changes: [
+      'Excel import with FR Case Mileage file parsing',
+      'Home address auto-detection from first row of each day',
+      'Over-mileage flagging (actual > estimated)',
+      'Day-grouped stops with survey type and mileage badges',
+      'Base64 JSON encoding replaces pipe-separated URL format',
+    ],
+  },
+  {
+    version: '2.0.0',
+    date: '2026-03-18',
+    changes: [
+      'Case # lookup tab with batch processing',
+      'Auto-extract report type, date, and survey type from Mueller pages',
+      'Survey type mapping (Exterior, Interior/Exterior, High Value, LPC, etc.)',
+      'Results grouped by day with date tags',
+    ],
+  },
+  {
+    version: '1.0.0',
+    date: '2026-03-17',
+    changes: [
+      'Initial release: Chrome extension for Mueller Reports Route Optimizer',
+      'Context menu to add selected text as address',
+      'Manual stop entry and send to Route Optimizer',
+      'Settings panel for Route Optimizer URL',
+    ],
+  },
+];
+
 // --- Survey type mapping from Mueller report types ---
 const SURVEY_TYPE_MAP = [
   { pattern: /close\s*out/i, type: 'Exterior' },
@@ -121,6 +175,12 @@ const settingsIcon = document.getElementById('settingsIcon');
 const settingsContent = document.getElementById('settingsContent');
 const appUrlInput = document.getElementById('appUrlInput');
 const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+
+// Changelog
+const versionBadge = document.getElementById('versionBadge');
+const changelogOverlay = document.getElementById('changelogOverlay');
+const changelogClose = document.getElementById('changelogClose');
+const changelogBody = document.getElementById('changelogBody');
 
 // ===================== STATE =====================
 
@@ -256,6 +316,13 @@ function setupEventListeners() {
   // Settings
   settingsToggle.addEventListener('click', toggleSettings);
   saveSettingsBtn.addEventListener('click', saveSettings);
+
+  // Changelog
+  versionBadge.addEventListener('click', openChangelog);
+  changelogClose.addEventListener('click', closeChangelog);
+  changelogOverlay.addEventListener('click', (e) => {
+    if (e.target === changelogOverlay) closeChangelog();
+  });
 }
 
 // ===================== EXCEL IMPORT =====================
@@ -1173,6 +1240,27 @@ function renderStopItem(stop, num) {
       <button class="stop-remove" data-index="${stop._index}" title="Remove">&#215;</button>
     </div>
   `;
+}
+
+// ===================== CHANGELOG =====================
+
+function openChangelog() {
+  changelogBody.innerHTML = EXT_CHANGELOG.map(release => `
+    <div class="changelog-release">
+      <div class="release-header">
+        <span class="release-ver">v${escapeHtml(release.version)}</span>
+        <span class="release-date">${escapeHtml(release.date)}</span>
+      </div>
+      <ul class="release-changes">
+        ${release.changes.map(c => `<li>${escapeHtml(c)}</li>`).join('')}
+      </ul>
+    </div>
+  `).join('');
+  changelogOverlay.classList.add('active');
+}
+
+function closeChangelog() {
+  changelogOverlay.classList.remove('active');
 }
 
 function escapeHtml(text) {
