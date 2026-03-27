@@ -5,37 +5,44 @@ import { geocodeAddress } from '../utils/geocoding';
 import './OpenCasesPanel.css';
 
 // In-memory geocode cache keyed by "address, city, state"
+// Successful results are cached permanently; failures are NOT cached so they can be retried
 const geocodeCache = {};
-let geocodeAbort = false;
+let geocodeAbortController = null;
 
 async function geocodeCases(cases, geocodeCaseFn) {
-  geocodeAbort = true; // cancel any previous run
-  await new Promise(r => setTimeout(r, 50)); // let previous loop exit
-  geocodeAbort = false;
+  // Cancel any previous run
+  if (geocodeAbortController) {
+    geocodeAbortController.abort();
+  }
+  const controller = new AbortController();
+  geocodeAbortController = controller;
+
+  // Small delay to let the previous loop exit cleanly
+  await new Promise(r => setTimeout(r, 50));
+  if (controller.signal.aborted) return;
 
   for (const c of cases) {
-    if (geocodeAbort) return;
+    if (controller.signal.aborted) return;
     const key = `${c.address}, ${c.city}, ${c.state}`;
 
     // Already geocoded in store
     if (c.lat && c.lng) continue;
 
-    // Check cache
+    // Check cache (only successful results are cached)
     if (geocodeCache[key]) {
-      if (geocodeCache[key].lat) {
-        geocodeCaseFn(c.controlNumber, geocodeCache[key].lat, geocodeCache[key].lng);
-      }
+      geocodeCaseFn(c.controlNumber, geocodeCache[key].lat, geocodeCache[key].lng);
       continue;
     }
 
     try {
       const geo = await geocodeAddress(key);
+      // Only cache successful results
       geocodeCache[key] = { lat: geo.lat, lng: geo.lng };
-      if (!geocodeAbort) {
+      if (!controller.signal.aborted) {
         geocodeCaseFn(c.controlNumber, geo.lat, geo.lng);
       }
     } catch {
-      geocodeCache[key] = { lat: null, lng: null };
+      // Don't cache failures - they'll be retried on the next run
     }
   }
 }
@@ -120,7 +127,9 @@ export default function OpenCasesBar() {
   useEffect(() => {
     if (casesToGeocode.length === 0) return;
     geocodeCases(casesToGeocode, geocodeCase);
-    return () => { geocodeAbort = true; };
+    return () => {
+      if (geocodeAbortController) geocodeAbortController.abort();
+    };
   }, [casesToGeocode, geocodeCase]);
 
   const totalVisible = unassignedCases.length + assignedCases.length;

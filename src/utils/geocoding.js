@@ -6,7 +6,9 @@ const LOCATIONIQ_BASE = 'https://us1.locationiq.com/v1';
 // Set to empty string to skip this fallback
 const LOCATIONIQ_KEY = '';
 
+// Separate throttle timers so search is never blocked by batch geocoding
 let lastNominatimTime = 0;
+let lastNominatimSearchTime = 0;
 const NOMINATIM_INTERVAL = 1100; // 1 req/sec
 
 let lastLocationIQTime = 0;
@@ -17,6 +19,13 @@ async function throttleNominatim() {
   const wait = NOMINATIM_INTERVAL - (now - lastNominatimTime);
   if (wait > 0) await new Promise(r => setTimeout(r, wait));
   lastNominatimTime = Date.now();
+}
+
+async function throttleNominatimSearch() {
+  const now = Date.now();
+  const wait = NOMINATIM_INTERVAL - (now - lastNominatimSearchTime);
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastNominatimSearchTime = Date.now();
 }
 
 async function throttleLocationIQ() {
@@ -412,9 +421,9 @@ export async function reverseGeocode(lat, lng) {
 // ---------------------------------------------------------------------------
 
 export async function searchAddresses(query) {
-  // 1. Try Nominatim first
+  // 1. Try Nominatim first (uses separate throttle so search isn't blocked by batch geocoding)
   try {
-    await throttleNominatim();
+    await throttleNominatimSearch();
     const params = new URLSearchParams({
       q: query,
       format: 'json',
