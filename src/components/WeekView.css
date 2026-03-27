@@ -547,6 +547,82 @@
   letter-spacing: 0.05em;
 }
 
+/* FR Route vs Optimized Comparison */
+.route-comparison {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--mr-gray-200);
+}
+
+.comparison-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--mr-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 1rem 0;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+.comparison-column {
+  padding: 1rem;
+  background: var(--mr-gray-50);
+  border-radius: var(--mr-radius);
+  border: 1px solid var(--mr-gray-200);
+  text-align: center;
+}
+
+.comparison-column.comparison-savings {
+  background: var(--mr-green-light);
+  border-color: var(--mr-green);
+}
+
+.comparison-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--mr-gray-600);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--mr-gray-200);
+}
+
+.comparison-savings .comparison-header {
+  border-bottom-color: var(--mr-green);
+  color: var(--mr-green);
+}
+
+.comparison-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--mr-dark);
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+
+.comparison-value.savings-value {
+  color: var(--mr-green);
+}
+
+.comparison-label {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--mr-gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.comparison-label:last-child {
+  margin-bottom: 0;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .week-view {

@@ -126,11 +126,14 @@ export const WeekView = () => {
     return Object.entries(rawDuplicates).map(([area, days]) => ({ area, days }));
   }, [allWeekStops]);
 
-  // Calculate week summary stats
+  // Calculate week summary stats - always use original (FR's actual route)
   const weekStats = useMemo(() => {
     let totalStops = 0;
     let totalDistance = 0;
     let totalDuration = 0;
+    let totalOptimizedDistance = 0;
+    let totalOptimizedDuration = 0;
+    let daysWithBothRoutes = 0;
 
     weekDays.forEach(day => {
       const dayStops = stopsByDay[day.date];
@@ -138,10 +141,16 @@ export const WeekView = () => {
 
       const dayRoute = routes[day.date];
       if (dayRoute) {
-        const route = dayRoute.optimized || dayRoute.original;
-        if (route) {
-          totalDistance += route.distance || 0;
-          totalDuration += route.duration || 0;
+        // Always use original (FR's actual route) for totals
+        if (dayRoute.original) {
+          totalDistance += dayRoute.original.distance || 0;
+          totalDuration += dayRoute.original.duration || 0;
+        }
+        // Track optimized totals for comparison
+        if (dayRoute.original && dayRoute.optimized) {
+          totalOptimizedDistance += dayRoute.optimized.distance || 0;
+          totalOptimizedDuration += dayRoute.optimized.duration || 0;
+          daysWithBothRoutes++;
         }
       }
     });
@@ -150,6 +159,11 @@ export const WeekView = () => {
       totalStops,
       totalDistance,
       totalDuration,
+      totalOptimizedDistance,
+      totalOptimizedDuration,
+      hasSavings: daysWithBothRoutes > 0,
+      savedDistance: totalDistance - totalOptimizedDistance,
+      savedDuration: totalDuration - totalOptimizedDuration,
       duplicateCount: duplicateWarnings.length
     };
   }, [weekDays, stopsByDay, routes, duplicateWarnings]);
@@ -168,14 +182,14 @@ export const WeekView = () => {
       const availableCases = filterOpenCases(openCases, day.date)
         .filter(c => c.lat && c.lng);
 
-      // Get unassigned exterior cases near any stop
+      // Get assigned exterior cases near any stop (only for the selected FR)
       const nearbyCases = availableCases.filter(c => {
         // Skip cases that are already in the route as stops
         const alreadyInRoute = stops.some(s => s.caseNumber === c.controlNumber);
         if (alreadyInRoute) return false;
 
-        // Must be unassigned OR assigned to the selected FR
-        if (c.frAssigned && c.frAssigned !== selectedFR) return false;
+        // Only show cases assigned to the selected FR (skip unassigned)
+        if (!c.frAssigned || c.frAssigned !== selectedFR) return false;
 
         // Check if within radius of any stop
         return dayStops.some(stop =>
@@ -340,7 +354,7 @@ export const WeekView = () => {
           const isToday = day.date === todayStr;
           const routeStatus = getRouteStatus(day.date);
           const dayRoute = routes[day.date];
-          const route = dayRoute?.optimized || dayRoute?.original;
+          const route = dayRoute?.original;
 
           return (
             <div
@@ -490,7 +504,6 @@ export const WeekView = () => {
                           <span className="opportunity-case-addr">{c.address}, {c.city}</span>
                           <span className="opportunity-case-meta">
                             #{c.controlNumber} - {c.surveyType}
-                            {!c.frAssigned && <span className="opp-unassigned"> (Unassigned)</span>}
                           </span>
                         </div>
                       </div>
@@ -556,6 +569,40 @@ export const WeekView = () => {
             </div>
           </div>
         </div>
+
+        {/* FR Route vs Optimized Route Comparison */}
+        {weekStats.hasSavings && (
+          <div className="route-comparison">
+            <h4 className="comparison-title">FR Route vs Optimized Route</h4>
+            <div className="comparison-grid">
+              <div className="comparison-column">
+                <div className="comparison-header">FR Route</div>
+                <div className="comparison-value">{formatDistance(weekStats.totalDistance)}</div>
+                <div className="comparison-label">Distance</div>
+                <div className="comparison-value">{formatDuration(weekStats.totalDuration)}</div>
+                <div className="comparison-label">Duration</div>
+              </div>
+              <div className="comparison-column">
+                <div className="comparison-header">Optimized</div>
+                <div className="comparison-value">{formatDistance(weekStats.totalOptimizedDistance)}</div>
+                <div className="comparison-label">Distance</div>
+                <div className="comparison-value">{formatDuration(weekStats.totalOptimizedDuration)}</div>
+                <div className="comparison-label">Duration</div>
+              </div>
+              <div className="comparison-column comparison-savings">
+                <div className="comparison-header">Savings</div>
+                <div className="comparison-value savings-value">
+                  {weekStats.savedDistance > 0 ? '-' : ''}{formatDistance(Math.abs(weekStats.savedDistance))}
+                </div>
+                <div className="comparison-label">Distance</div>
+                <div className="comparison-value savings-value">
+                  {weekStats.savedDuration > 0 ? '-' : ''}{formatDuration(Math.abs(weekStats.savedDuration))}
+                </div>
+                <div className="comparison-label">Duration</div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
