@@ -3,6 +3,19 @@ import './Changelog.css';
 
 const CHANGELOG = [
   {
+    version: '1.7.0',
+    date: '2026-03-27',
+    changes: [
+      'Faster geocoding - providers run in round-robin with 3 cases processed concurrently',
+      'Search bar no longer blocked while open cases are geocoding',
+      'Failed geocodes automatically retry on next load instead of being permanently skipped',
+      'Week View now shows FR actual route stats instead of optimized route',
+      'New FR Route vs Optimized Route comparison in Week Summary with savings breakdown',
+      'Missed Exterior Opportunities now only shows cases assigned to the selected FR',
+      'Light mode map switched to CartoDB Positron for cleaner look',
+    ],
+  },
+  {
     version: '1.6.0',
     date: '2026-03-27',
     changes: [
@@ -113,7 +126,7 @@ const CHANGELOG = [
   },
 ];
 
-export const CURRENT_VERSION = '1.6.0';
+export const CURRENT_VERSION = '1.7.0';
 
 export default function Changelog({ onClose }) {
   return (
